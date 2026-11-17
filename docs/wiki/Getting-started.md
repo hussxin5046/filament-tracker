@@ -16,8 +16,10 @@ A **workspace** is one workshop: its stock, machines, jobs and members. You can 
 
 ![Creating a new workspace from a template](images/new-workspace.png)
 
-1. Give it a name and a **Currency** (a 3-letter code such as GBP, EUR or USD, used for costs).
-2. Under **Start from**, pick the template closest to your workshop:
+Setting up a workspace is a few short steps, with **Next** and **Back** to move between them.
+
+1. **Workspace**: give it a name and a **Currency** (a 3-letter code such as GBP, EUR or USD, used for costs).
+2. **Start from**: pick the template closest to your workshop:
 
    | Template | Starts you with |
    | --- | --- |
@@ -29,15 +31,16 @@ A **workspace** is one workshop: its stock, machines, jobs and members. You can 
    | School lab | Class kits, safety equipment and shared machines, with a locked store and termly safety checks |
    | Example maker space | A fully filled-in sample with machines, stock and jobs, useful for learning the app |
 
-3. Under **Adjust what gets created**, untick anything you do not need.
-4. Optionally, under **Your machines**, pick the machines you own from the built-in catalogue. Each one arrives with its specs, its feeders or tool changers, and its maintenance schedules.
+   Under **Adjust what gets created**, untick anything you do not need.
+3. **Your machines** (optional, **Skip for now** if you like): pick the machines you own from the built-in catalogue. Each one arrives with its specs, its feeders or tool changers, and its maintenance schedules.
+4. **Make it yours** (your first workspace only): pick light or dark mode, a palette and an accent colour. It is saved to your account as you choose; change it later under [Settings, Appearance](Catalogue-and-settings.md#appearance).
 5. Press **Create workspace**.
 
 A template only fills things in for you. Everything stays editable afterwards.
 
 ## Find your way around
 
-The sidebar has one entry per screen. On a phone, the less used ones are under **More**.
+The sidebar has one entry per screen. On a phone, four of them sit in a bar at the bottom and the rest are under **More**. You can change the order, and which four go in the phone bar, under [Settings, Navigation](Catalogue-and-settings.md#navigation).
 
 | Screen | What it is for | Guide |
 | --- | --- | --- |
@@ -49,8 +52,7 @@ The sidebar has one entry per screen. On a phone, the less used ones are under *
 | **Machines** | Your equipment and what is loaded in it | [Machines](Machines.md) |
 | **Reorder** | What to buy, grouped by supplier | [Inventory](Inventory.md#reordering) |
 | **Activity** | Every change, who made it, and undo for stock mistakes | [Dashboard and reports](Dashboard-and-reports.md#activity) |
-| **Settings** | Categories, units, suppliers, members, printers, import and export | [Catalogue and settings](Catalogue-and-settings.md) |
-| **Appearance** | Light or dark mode and your own colours | [Catalogue and settings](Catalogue-and-settings.md#appearance) |
+| **Settings** | Categories, units, suppliers, members, printers, import and export; and your own appearance, menu order and account | [Catalogue and settings](Catalogue-and-settings.md) |
 
 A red number on a sidebar entry counts things waiting there: overdue maintenance, items to reorder, requests to check.
 

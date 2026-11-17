@@ -2,6 +2,8 @@
 
 **Settings** holds what shapes a workspace: its categories, units, places, suppliers and people. Most of it is set up for you by a template, and all of it can be changed. Changing settings needs an admin, and a few things need an owner.
 
+Its sections come in two groups. **This workspace** is shared by every member. **You** (Appearance, Navigation and Your account) belongs to whoever is signed in, and anyone can change their own.
+
 ## Categories
 
 **Settings**, **Categories** lists the kinds of thing you stock. Add one for anything you keep: resin, timber, drill bits, PPE, electronics.
@@ -45,6 +47,8 @@ The workspace's name, description and **Currency**. Only an owner can change the
 | **Printers** | [Connecting printers](Connecting-printers.md) |
 | **Job requests** | [Job requests](Job-requests.md) |
 | **Import / export** | [Backups, import and export](Backups-and-data.md) |
+| **Appearance** | [Below](#appearance) |
+| **Navigation** | [Below](#navigation) |
 | **Your account** | [Below](#your-account) |
 
 ## The built-in catalogue
@@ -62,7 +66,17 @@ Filament data comes from [SpoolmanDB](https://github.com/Donkie/SpoolmanDB). Som
 
 ## Appearance
 
-**Appearance** in the sidebar sets your own look: **Light**, **Dark** or **Match device**, a palette, and an **Accent colour** for buttons and selected items. Warning and status colours never change, so alerts always look the same. Your choice is saved to your account and follows you to any device.
+**Settings**, **Appearance** sets your own look: **Light**, **Dark** or **Match device**, a palette, and an **Accent colour** for buttons and selected items. Warning and status colours never change, so alerts always look the same. Your choice is saved to your account and follows you to any device.
+
+## Navigation
+
+**Settings**, **Navigation** sets the order of the main menu, for you alone.
+
+- Move a page with its up and down arrows, or drag it with a mouse. Pages can be moved but never hidden.
+- Tick **Phone tab bar** on up to four pages to put them in the bar at the bottom of a phone's screen. The rest are under **More**. A preview shows how the bar will look.
+- **Reset to standard** puts everything back.
+
+Your layout is saved to your account and follows you to any device. It does not change what other members see. Pages added to Wrkbench later join the end of your list.
 
 ## Your account
 

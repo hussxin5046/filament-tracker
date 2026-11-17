@@ -34,7 +34,7 @@ A slot that says **Not linked to stock** holds a spool Wrkbench has not been tol
 3. Choose one:
    - **Choose from stock**: pick the item this spool is. The list puts the best matches first (same material and a close colour are marked "matches what the printer reports").
    - **Pick from catalogue** (admins): opens the built-in filament catalogue, already narrowed to the printer's material. Choose the product (brand and line); the colour closest to what the printer reports is chosen for you, and you can change it. Adding it creates the item with the catalogue's details (brand, spool size, density, temperatures) and puts it in the slot. The printer cannot tell the brand of a spool without a tag, so choosing the product is yours; prices are not in the catalogue.
-   - **Add as a new spool** (admins): opens the usual item form already filled in with name, material, colour, brand, size and how much is left. Check it, add a price or location if you like, and save. It is placed in the slot for you.
+   - **Add as a new spool** (admins): opens the usual item form already filled in from what the printer reads: name, material (the nearest one the category offers, so PETG HF becomes PETG), colour and its name, filament diameter, nozzle temperature range, and the printer ticked under **Fits these machines**. Tagged spools also bring brand, size and how much is left; a spool without a tag is assumed to be a full 1 kg spool. Check it, add a price or location if you like, and save. It is placed in the slot for you.
 
 ![The slot dialog: what the printer reports, then link or add](images/slot-dialog.png)
 

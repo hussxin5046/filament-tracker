@@ -116,5 +116,5 @@ Slots that say **Not linked to stock** hold a spool Wrkbench cannot yet tie to a
 ## Good to know
 
 - This reads the printer the same way community tools do, not through an official Bambu Lab interface. A printer firmware update can change or break it.
-- The reading was written from public notes on how the printers report, and tested against made-up data. Some details (certain models' tray reports, dual-nozzle printers, automatic discovery) are not yet confirmed on real hardware. If something on screen does not match the printer, the [record command](Bridge-reference.md#recording-what-a-printer-reports) captures what is needed to fix it.
+- The reading was written from public notes on how the printers report, and has since been checked against recordings from a real X2D (with an AMS 2 Pro, an AMS HT and two outside spool holders) and a real H2D with a 40 W laser. Other models, and automatic discovery, are not yet confirmed on real hardware. If something on screen does not match the printer, the [record command](Bridge-reference.md#recording-what-a-printer-reports) captures what is needed to fix it.
 - Prints are followed as jobs and the filament they use is taken from stock: see [Prints and filament use](Prints-and-filament-use.md). Wrkbench only reads printers; sending a job to one is not built.

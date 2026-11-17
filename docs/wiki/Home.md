@@ -18,7 +18,7 @@ New here? Start with **[Getting started](Getting-started.md)**.
 | [Job requests](Job-requests.md) | Letting people outside the workshop ask for jobs |
 | [Dashboard and reports](Dashboard-and-reports.md) | Overview, the daily report, the activity log and undo |
 | [Members and roles](Members-and-roles.md) | Sharing a workspace and who can do what |
-| [Catalogue and settings](Catalogue-and-settings.md) | Categories, units, suppliers, the built-in catalogue, appearance, your account |
+| [Catalogue and settings](Catalogue-and-settings.md) | Categories, units, suppliers, the built-in catalogue, appearance, menu order, your account |
 | [Backups, import and export](Backups-and-data.md) | Exporting a workspace, importing from a spreadsheet |
 
 ## Connected printers
