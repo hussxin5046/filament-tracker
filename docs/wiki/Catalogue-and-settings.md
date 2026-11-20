@@ -8,7 +8,7 @@ Its sections come in two groups. **This workspace** is shared by every member. *
 
 **Settings**, **Lists** holds your categories, units, machine types and suppliers together on one page, one after the other. Categories come first: they are the kinds of thing you stock. Add one for anything you keep: resin, timber, drill bits, PPE, electronics.
 
-![Categories under Settings](images/settings-categories.png)
+![The Lists section under Settings, with categories first and units below](images/settings-categories.png)
 
 Each category has:
 
