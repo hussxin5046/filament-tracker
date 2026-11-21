@@ -9,19 +9,17 @@ import { removeUsers, workspacesOnlyOwnedBy } from '@/services/accounts';
 import { attemptCounter } from '@/services/attempts';
 import { createGuest, GUEST_DAYS, isGuestEmail } from '@/services/guests';
 import { appUrl, confirmationRequired, sendMail } from '@/services/mail';
+import { requireGoodPassword } from '@/services/passwords';
 import { authenticatorLink, base32Encode, looksLikeAppCode, matchingStep, newRecoveryCodes, newSecret, openSecret, recoveryHash, sealSecret } from '@/services/twoStep';
 
 export const authRouter = Router();
 
 const emailField = z.string().trim().toLowerCase().pipe(z.email('Enter a valid email address'));
-// bcrypt only reads the first 72 bytes, so anything after them would be ignored without a word.
-// Counted in bytes: accented letters take two and most emoji four.
-const PASSWORD_MAX_BYTES = 72;
-const newPassword = z
-  .string()
-  .min(8, 'Use at least 8 characters')
-  .refine((password) => Buffer.byteLength(password, 'utf8') <= PASSWORD_MAX_BYTES, 'Use at most 72 characters (fewer with accents or emoji)');
-// Signing in keeps the old, looser limits: passwords set before the cap still work.
+// A password being set. Its rules (services/passwordRules.ts) are applied by requireGoodPassword in each route
+// that takes one, which knows whose password it is and can ask whether it is known from a data leak. They are
+// not applied here, so that a refusal is the plain sentence the web app also shows, with no field name in front.
+const newPassword = z.string();
+// Signing in keeps the old, looser limits: passwords set before today's rules still work.
 const credentials = z.object({ email: emailField, password: z.string().min(1).max(200) });
 const registration = z.object({ email: emailField, password: newPassword, name: z.string().trim().min(1, 'Enter your name').max(80) });
 
@@ -82,7 +80,7 @@ function readNavLayout(stored: string | null): unknown {
   }
 }
 
-const publicUser = (user: UserRecord) => ({
+export const publicUser = (user: UserRecord) => ({
   id: user.id,
   email: user.email,
   name: user.name,
@@ -110,12 +108,12 @@ const appearanceInput = z.object({
 });
 
 // Per client address. Generous enough for a shared workshop connection, tight enough to stop password guessing.
-const loginLimit = rateLimit(20, 15 * 60 * 1000);
+export const loginLimit = rateLimit(20, 15 * 60 * 1000);
 const registerLimit = rateLimit(10, 60 * 60 * 1000);
 // Each guest session copies the whole example workspace, so these are rationed harder.
 const guestLimit = rateLimit(5, 60 * 60 * 1000);
 // Both check the current password, so they are guessing targets like sign-in.
-const passwordLimit = rateLimit(10, 15 * 60 * 1000);
+export const passwordLimit = rateLimit(10, 15 * 60 * 1000);
 const forgotLimit = rateLimit(5, 60 * 60 * 1000);
 const resetLimit = rateLimit(10, 60 * 60 * 1000);
 const resetCheckLimit = rateLimit(30, 60 * 60 * 1000);
@@ -130,6 +128,7 @@ authRouter.post('/register', registerLimit, async (req, res) => {
   if (isGuestEmail(email) || (await prisma.user.findUnique({ where: { email } }))) {
     throw new HttpError(409, 'An account with that email already exists');
   }
+  await requireGoodPassword(password, { email, name });
   const passwordHash = await bcrypt.hash(password, 10);
 
   // A guest who registers keeps the same account, and with it everything they set up.
@@ -276,7 +275,7 @@ authRouter.patch('/me/preferences', requireAuth, async (req, res) => {
 // ---- Password and sessions ---------------------------------------------------
 
 /** The signed-in user, once they have proved they know the current password. Guests have none. */
-async function confirmPassword(userId: string, password: unknown) {
+export async function confirmPassword(userId: string, password: unknown) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new HttpError(401, 'Please sign in');
   if (user.isGuest) throw new HttpError(400, 'Guest sessions have no password. Create an account first.');
@@ -307,7 +306,8 @@ function sendPasswordChanged(user: { email: string; name: string }): void {
 
 authRouter.post('/password', passwordLimit, requireAuth, async (req, res) => {
   const { currentPassword, password } = parse(z.object({ currentPassword: z.string(), password: newPassword }), req.body);
-  await confirmPassword(req.userId, currentPassword);
+  const owner = await confirmPassword(req.userId, currentPassword);
+  await requireGoodPassword(password, owner);
   const user = await revokeSessions(req.userId, { passwordHash: await bcrypt.hash(password, 10) });
   sendPasswordChanged(user);
   res.json({ token: signToken(user), user: publicUser(user) });
@@ -380,6 +380,8 @@ authRouter.post('/reset', resetLimit, async (req, res) => {
   const { token, password } = parse(z.object({ token: z.string().min(1).max(2000), password: newPassword }), req.body);
   const user = await userForReset(token);
   if (!user || user.isGuest) throw new HttpError(400, RESET_LINK_DEAD);
+  // A refused password leaves the link as it was, to try again with another.
+  await requireGoodPassword(password, user);
   // Raising the version makes the link single-use and signs out every device that knew the old password.
   // The link also proved the address is theirs, which is all confirming it asks.
   const updated = await revokeSessions(user.id, {
@@ -400,7 +402,7 @@ authRouter.post('/reset', resetLimit, async (req, res) => {
 // ---- Two-step sign-in ---------------------------------------------------------
 
 /** An authenticator code ("123 456") or a recovery code ("ABCD-EFGH-JKMN"). */
-const secondStepCode = z.string().trim().min(6, 'Enter the 6-digit code').max(40);
+export const secondStepCode = z.string().trim().min(6, 'Enter the 6-digit code').max(40);
 // Per account, from any address, across signing in and the settings below: five wrong codes in 15 minutes.
 const twoStepAttempts = attemptCounter('twostep', 5, 15 * 60 * 1000);
 const WRONG_CODE = 'That code is not right. Codes change every 30 seconds, so use the newest one, or a recovery code.';
@@ -415,7 +417,7 @@ type TwoStepUser = { id: string; totpSecret: string | null; totpEnabledAt: Date 
  * The count is kept under `accountId`, passed on its own: the id of whoever is signing in or signed in, never
  * anything derived from a password check.
  */
-async function takeSecondStep(accountId: string, user: TwoStepUser, typed: string, wrongStatus: 400 | 401 = 401): Promise<'app' | 'recovery'> {
+export async function takeSecondStep(accountId: string, user: TwoStepUser, typed: string, wrongStatus: 400 | 401 = 401): Promise<'app' | 'recovery'> {
   if (!(await twoStepAttempts.attempt(accountId))) throw new HttpError(429, 'Too many wrong codes. Wait 15 minutes and try again.');
   let how: 'app' | 'recovery' | null = null;
   if (looksLikeAppCode(typed)) {
@@ -435,7 +437,7 @@ async function takeSecondStep(accountId: string, user: TwoStepUser, typed: strin
   return how;
 }
 
-function sendAccountNotice(user: { email: string; name: string }, subject: string, lines: string[]): void {
+export function sendAccountNotice(user: { email: string; name: string }, subject: string, lines: string[]): void {
   sendMail({
     to: user.email,
     subject,

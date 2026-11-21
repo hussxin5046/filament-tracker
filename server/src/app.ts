@@ -9,6 +9,7 @@ import { env } from '@/env';
 import { errorHandler, HttpError } from '@/http';
 import { REPLAYED_HEADER } from '@/idempotency';
 import { authRouter } from '@/routes/auth';
+import { passkeysRouter } from '@/routes/passkeys';
 import { registerActivityRoutes } from '@/routes/activity';
 import { registerCatalogRoutes } from '@/routes/catalog';
 import { registerItemRoutes } from '@/routes/items';
@@ -72,6 +73,7 @@ export function createApp(): express.Express {
   registerPrinterRoutes(workspaceScope);
   registerDeviceRoutes(workspaceScope);
 
+  app.use('/api/auth/passkeys', passkeysRouter);
   app.use('/api/auth', authRouter);
   // The only routes that need no account: sending a job request and following its progress.
   app.use('/api/public', publicRequestsRouter);

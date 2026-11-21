@@ -7,7 +7,7 @@ import styles from '@/pages/LegalPages.module.css';
  * Also review both documents with a lawyer for the jurisdictions you serve.
  */
 export const LEGAL_CONTACT = 'hello@wrkbench.xyz';
-const UPDATED = '14 November 2026';
+const UPDATED = '21 November 2026';
 
 function Doc({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -49,7 +49,8 @@ export function PrivacyPage() {
       <h2>What we collect</h2>
       <ul>
         <li>
-          <strong>Account:</strong> your name, email address and a hashed password. Guest sessions use a throwaway
+          <strong>Account:</strong> your name, email address and a hashed password. If you add a passkey, its public key, the name you
+          give it and when it was last used; the private half never leaves your device. Guest sessions use a throwaway
           address and are deleted after 7 days.
         </li>
         <li>
@@ -91,6 +92,11 @@ export function PrivacyPage() {
         </li>
         <li>
           <strong>Our hosting provider</strong> stores the database and uploaded files.
+        </li>
+        <li>
+          <strong>Have I Been Pwned</strong> is asked whether a password you are setting is known from a data leak. It
+          is sent a small part of a scrambled form of the password, which is not enough to work the password out, and
+          nothing that says who you are.
         </li>
         <li>Other members of a workspace can see the workspace data and activity you create in it.</li>
       </ul>

@@ -1,19 +1,25 @@
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
+import { Fingerprint } from 'lucide-react';
 import { LegalNote } from '@/pages/LegalPages';
 import { Button } from '@/components/ui/Button';
 import { ErrorNote } from '@/components/ui/Display';
 import { TextField } from '@/components/ui/Form';
+import { NewPasswordField } from '@/components/ui/NewPasswordField';
 import { useAuth } from '@/context/AuthContext';
+import { ApiError } from '@/lib/api';
+import { passkeyPromptDismissed, passkeysSupported } from '@/lib/passkeys';
+import { REFUSALS, weakness } from '@/lib/passwordRules';
 import styles from '@/pages/AuthPage.module.css';
 
 export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
-  const { user, login, register, continueAsGuest, completeTwoStep } = useAuth();
+  const { user, login, register, continueAsGuest, completeTwoStep, signInWithPasskey } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [refused, setRefused] = useState<string | null>(null);
   // Set once the password was right on an account with two-step sign-in: the form then asks for a code.
   const [challenge, setChallenge] = useState<string | null>(null);
   const [code, setCode] = useState('');
@@ -44,13 +50,38 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (challenge) void run(() => completeTwoStep(challenge, code));
-    else if (registering) void run(() => register(name, email, password));
-    else
+    else if (registering) {
+      // What the browser can already tell is said at once, in the server's words. The server still checks.
+      const weak = weakness(password, { email, name });
+      if (weak) setError(REFUSALS[weak]);
+      else {
+        void run(async () => {
+          try {
+            await register(name, email, password);
+          } catch (cause) {
+            setRefused(password);
+            throw cause;
+          }
+        });
+      }
+    } else {
       void run(async () => {
         const next = await login(email, password);
         if (next) setChallenge(next);
       });
+    }
   };
+
+  const usePasskey = () =>
+    void run(async () => {
+      try {
+        await signInWithPasskey();
+      } catch (cause) {
+        // Closing the device's prompt is a change of mind, not a failure to report.
+        if (passkeyPromptDismissed(cause)) return;
+        throw cause instanceof ApiError ? cause : new Error('Your device could not use a passkey. Sign in with your password instead.');
+      }
+    });
 
   const startOver = () => {
     setChallenge(null);
@@ -148,15 +179,11 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
           {upgrading && <p className={styles.note}>Everything you set up as a guest stays with your new account.</p>}
           {registering && <TextField label="Your name" value={name} onChange={setName} autoComplete="name" required />}
           <TextField label="Email" type="email" value={email} onChange={setEmail} autoComplete="email" inputMode="email" required />
-          <TextField
-            label="Password"
-            type="password"
-            value={password}
-            onChange={setPassword}
-            autoComplete={registering ? 'new-password' : 'current-password'}
-            hint={registering ? 'At least 8 characters.' : undefined}
-            required
-          />
+          {registering ? (
+            <NewPasswordField label="Password" value={password} onChange={setPassword} owner={{ email, name }} refused={refused} required />
+          ) : (
+            <TextField label="Password" type="password" value={password} onChange={setPassword} autoComplete="current-password" required />
+          )}
           {!registering && (
             <p className={styles.forgot}>
               <Link to="/forgot-password">Forgot password?</Link>
@@ -167,6 +194,11 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
           <Button type="submit" variant="primary" size="lg" block disabled={busy}>
             {registering ? 'Create account' : 'Sign in'}
           </Button>
+          {!registering && passkeysSupported() && (
+            <Button size="lg" block icon={Fingerprint} disabled={busy} onClick={usePasskey}>
+              Sign in with a passkey
+            </Button>
+          )}
           {!upgrading && (
             <>
               <div className={styles.divider}>or</div>

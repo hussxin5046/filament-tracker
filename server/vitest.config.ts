@@ -14,7 +14,8 @@ export default defineConfig({
     globalSetup: ['./test/globalSetup.ts'],
     setupFiles: ['./test/setupFile.ts'],
     // Satisfies env.ts when a test imports server code. DATABASE_URL is replaced per file by test/setupFile.ts.
-    env: { DATABASE_URL: 'file:./unused-by-tests.db', JWT_SECRET: 'test-only-secret-not-used-outside-vitest-0123456789' },
+    // Tests never call an outside service: the leaked-password lookup is off unless a test stands in for it.
+    env: { DATABASE_URL: 'file:./unused-by-tests.db', JWT_SECRET: 'test-only-secret-not-used-outside-vitest-0123456789', PASSWORD_BREACH_CHECK: 'off' },
     testTimeout: 20_000,
   },
 });

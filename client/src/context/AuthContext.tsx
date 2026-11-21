@@ -1,3 +1,4 @@
+import { startAuthentication } from '@simplewebauthn/browser';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { api, ApiError, AUTH_EXPIRED_EVENT, tokenStore } from '@/lib/api';
 import { flushHeldDeletes } from '@/lib/heldDeletes';
@@ -17,6 +18,8 @@ interface AuthValue {
    */
   login: (email: string, password: string) => Promise<string | null>;
   completeTwoStep: (challenge: string, code: string) => Promise<void>;
+  /** Sign in with a passkey this device holds. It stands for the password and the two-step code together. Rejects if the device's prompt is closed. */
+  signInWithPasskey: () => Promise<void>;
   /** Finish turning two-step sign-in on. Resolves to the recovery codes, which are shown once. */
   enableTwoStep: (code: string) => Promise<string[]>;
   /** For a guest this turns the session into a real account and keeps its workspaces. */
@@ -125,6 +128,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       },
       completeTwoStep: async (challenge, code) => start(await api.post<Session>('/auth/login/two-step', { challenge, code })),
+      signInWithPasskey: async () => {
+        const { options } = await api.post<{ options: Parameters<typeof startAuthentication>[0]['optionsJSON'] }>('/auth/passkeys/sign-in/start');
+        const response = await startAuthentication({ optionsJSON: options });
+        start(await api.post<Session>('/auth/passkeys/sign-in/finish', { response }));
+      },
       // Turning it on signs every other device out, so this one gets a new token along with the codes.
       enableTwoStep: async (code) => {
         const answer = await api.post<Session & { recoveryCodes: string[] }>('/auth/two-step/enable', { code });

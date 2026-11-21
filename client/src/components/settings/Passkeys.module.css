@@ -1,0 +1,63 @@
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+}
+
+/* One passkey. Its buttons sit beside the name where there is room and drop under it on a phone. */
+.passkey {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border);
+}
+
+.passkey:last-child {
+  border-bottom: 0;
+}
+
+.icon {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  /* Wide enough that a name is readable before the buttons are allowed to share the line. */
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.name {
+  font-weight: var(--weight-medium);
+  overflow-wrap: anywhere;
+}
+
+.details {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.elsewhere {
+  color: var(--color-warn);
+}
+
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

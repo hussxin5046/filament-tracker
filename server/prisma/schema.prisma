@@ -49,6 +49,7 @@ model User {
   requestComments  JobRequestComment[]
   activities       ActivityLog[]
   recoveryCodes    RecoveryCode[]
+  passkeys         Passkey[]
 }
 
 /// A single-use code that signs in instead of the authenticator app, for a lost phone. Shown once, when two-step
@@ -63,6 +64,46 @@ model RecoveryCode {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+/// A passkey: a key pair held by the member's device, which signs them in on its own, without the password or the
+/// two-step code. Only the public half is here, so a copy of the database gives nobody a way in.
+model Passkey {
+  id           String    @id @default(cuid())
+  userId       String
+  /// What the device calls this passkey (base64url). It names itself with this when signing in.
+  credentialId String    @unique
+  /// The public key, in the COSE form the device gave it in.
+  publicKey    Bytes
+  /// How many times the device says it has signed. A sign-in whose count is not higher than this is refused, because
+  /// it means the passkey was copied. Passkeys that sync between devices always say 0, which is allowed.
+  counter      BigInt    @default(0)
+  /// What the member calls it, e.g. "iPhone".
+  name         String
+  /// The site address it was made for (the WebAuthn relying party ID). It works nowhere else.
+  site         String
+  /// How the device can be reached ("internal", "hybrid", "usb" ...), comma separated, as a hint for the browser.
+  transports   String?
+  /// Whether the device says the passkey is kept in a synced account (iCloud, Google ...) and not on one device only.
+  synced       Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  lastUsedAt   DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// The random value a device signs when a passkey is added or used. Each works once, for five minutes.
+/// purpose: "add" (then userId says for whom) | "sign-in" (nobody is known yet).
+model PasskeyChallenge {
+  id        String   @id @default(cuid())
+  challenge String   @unique
+  purpose   String
+  userId    String?
+  expiresAt DateTime
+
+  @@index([expiresAt])
 }
 
 model Workspace {

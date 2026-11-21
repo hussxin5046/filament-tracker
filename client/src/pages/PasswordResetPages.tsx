@@ -3,8 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { ErrorNote } from '@/components/ui/Display';
 import { TextField } from '@/components/ui/Form';
+import { NewPasswordField } from '@/components/ui/NewPasswordField';
 import { useAuth } from '@/context/AuthContext';
 import { api, ApiError } from '@/lib/api';
+import { REFUSALS, weakness } from '@/lib/passwordRules';
 import { LegalLinks } from '@/pages/LegalPages';
 import styles from '@/pages/AuthPage.module.css';
 
@@ -84,6 +86,7 @@ export function ResetPasswordPage() {
     return value;
   });
   const [password, setPassword] = useState('');
+  const [refused, setRefused] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   // A link works once, for an hour. Ask the server before showing the form, so a used link says so at once.
@@ -109,6 +112,12 @@ export function ResetPasswordPage() {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    // What the browser can already tell is said at once, in the server's words. The server still checks.
+    const weak = weakness(password);
+    if (weak) {
+      setError(REFUSALS[weak]);
+      return;
+    }
     setError('');
     setBusy(true);
     try {
@@ -116,6 +125,7 @@ export function ResetPasswordPage() {
       // With two-step sign-in the new password is only half of signing in.
       else navigate('/login', { replace: true, state: { notice: 'Your password is changed. Sign in with it, then enter a code from your authenticator app.' } });
     } catch (cause) {
+      setRefused(password);
       setError(message(cause));
       setBusy(false);
     }
@@ -133,13 +143,12 @@ export function ResetPasswordPage() {
           <ErrorNote>{dead}</ErrorNote>
         ) : token ? (
           <>
-            <TextField
+            <NewPasswordField
               label="New password"
-              type="password"
               value={password}
               onChange={setPassword}
-              autoComplete="new-password"
-              hint="At least 8 characters. Every device signed in to your account will be signed out."
+              refused={refused}
+              hintAfter="Every device signed in to your account will be signed out."
               required
             />
             {error && <ErrorNote>{error}</ErrorNote>}

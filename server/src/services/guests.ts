@@ -4,6 +4,7 @@ import { prisma } from '@/db';
 import { importSnapshot } from '@/services/snapshot';
 import { removeUsers } from '@/services/accounts';
 import { forgetOldAttempts } from '@/services/attempts';
+import { forgetOldChallenges } from '@/services/passkeys';
 import { getTemplate } from '@/templates';
 
 /**
@@ -61,6 +62,7 @@ export function scheduleGuestCleanup(): void {
       .catch((cause: unknown) => console.error('Guest cleanup failed', cause));
     // The same round sweeps out sign-in attempts too old to count.
     forgetOldAttempts().catch((cause: unknown) => console.error('Could not remove old sign-in attempts', cause));
+    forgetOldChallenges().catch((cause: unknown) => console.error('Could not remove old passkey challenges', cause));
   };
   run();
   setInterval(run, 6 * 60 * 60 * 1000).unref();

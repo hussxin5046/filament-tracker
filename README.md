@@ -54,7 +54,7 @@ You need [Node.js](https://nodejs.org) 22.9 or newer and [Git](https://git-scm.c
      node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
      ```
 
-   - `SEED_PASSWORD`: choose a password (at least 8 characters) for the demo account.
+   - `SEED_PASSWORD`: choose a password (at least 12 characters) for the demo account.
 
 4. Install everything and create the database with sample data:
 

@@ -6,12 +6,58 @@ Wrkbench keeps track of what your workshop has in stock, where it is, which mach
 
 ![The sign-in page](images/sign-in.png)
 
-- **Create an account** with your name, email and a password of 8 to 72 characters. Accented letters and emoji take up more room, so a password full of them has a lower limit.
+- **Create an account** with your name, email and a password. See [Choosing a password](#choosing-a-password) for what makes one acceptable.
 - **Confirm your email.** After you create an account, Wrkbench emails you a link. Open it within a day to show the address is yours. If it is not in your inbox, look in your junk folder. You can use Wrkbench straight away without it, but until you do, nobody can add you to their workspace, and a notice at the top of the page reminds you. **Send the link again** on that notice sends a fresh one. (If whoever runs your copy of Wrkbench has not set up email, there is nothing to confirm and no notice.)
 - **Continue as guest** to look around without registering. You get your own copy of the example maker space, full of sample machines, stock and jobs. If you like it, choose **Create an account** in the sidebar and everything you set up as a guest moves to your new account. A guest that is not turned into an account is deleted after 7 days.
 - **Forgot password?** emails you a link that works once, for one hour. (The person running your copy of Wrkbench has to have set up email for this to arrive.) Choosing a new password this way also confirms your email.
 - Whenever your password changes, Wrkbench emails you to say so. If you did not change it, use **Forgot password?** at once to choose a new one.
 - After 10 wrong passwords for one email within 15 minutes, signing in with that email is paused for up to 15 minutes, from any device. Choosing a new password with **Forgot password?** lifts the pause straight away.
+
+## Choosing a password
+
+These rules apply whenever you set a password: when you **Create an account**, under **Change password**, and when you choose a new one from a **Forgot password?** link.
+
+- **At least 12 characters.** Length is what makes a password hard to guess. A few unrelated words work well, spaces included.
+- **No symbols, capitals or numbers are required.** Use them if you like. A password from a password manager is fine.
+- **At most 72 characters.** Accented letters and emoji take up more room, so a password full of them has a lower limit.
+
+Wrkbench refuses a password that would be easy to guess, and says why:
+
+- one that many people use, such as **qwerty123456**;
+- the same few characters repeated, such as **abcabcabcabc**;
+- your email address, or just your name or the word Wrkbench with numbers around it;
+- one that has appeared in a data leak. Passwords stolen from other websites are collected and tried everywhere, so one that has leaked is not safe even if it is long.
+
+The line under the password box tells you how you are doing as you type. The check for leaked passwords happens when you press the button.
+
+To check for leaks, Wrkbench asks a public service, Have I Been Pwned. Your password is never sent to it, only a small part of a scrambled form of it, which is not enough to work out the password. Whoever runs your copy of Wrkbench can turn this check off.
+
+**A password you already have keeps working**, even if it is shorter than 12 characters. The rules apply the next time you change it.
+
+## Passkeys
+
+A passkey lets you sign in with your fingerprint, your face or your device's screen lock, without typing your password. It is kept by your phone, computer or security key, and it only works on your copy of Wrkbench, so it cannot be tricked out of you by a fake sign-in page.
+
+Your password keeps working alongside it. If you lose the device, sign in with your password as before.
+
+**Add one**
+
+1. Go to **Settings**, **Your account**, and press **Add a passkey**.
+2. Enter your password and press **Continue**. If you use [two-step sign-in](#two-step-sign-in), enter a code as well.
+3. Your device asks for your fingerprint, face or screen lock. Follow what it shows.
+4. Give the passkey a name you will recognise, such as **Bench laptop**, and press **Done**.
+
+Wrkbench emails you whenever a passkey is added or removed. You can have up to 10. You must have [confirmed your email](#sign-in-or-try-it-as-a-guest) first, and a guest session cannot have one.
+
+**Sign in with it.** On the sign-in page press **Sign in with a passkey** and follow what your device shows. You do not need to type your email. A passkey counts as both steps of two-step sign-in, so you are not asked for a code.
+
+**Rename or remove one** under **Settings**, **Your account**, where each passkey shows when it was added and last used. Removing one stops it signing in at once; you can remove the last one. Your device may keep listing it until you delete it there too.
+
+Good to know:
+
+- A passkey saved to your Apple, Google or Microsoft account, or to a password manager, follows you to your other devices. One saved to a single device or a security key stays there, so add a passkey on each device you use.
+- Choosing a new password with **Forgot password?** does not remove your passkeys.
+- If you lose a device, remove its passkey under **Settings**, **Your account** from another device. If you cannot get in at all, see [Troubleshooting](Troubleshooting.md).
 
 ## Two-step sign-in
 

@@ -101,6 +101,32 @@ With email set up, a new account is also sent a link to confirm its address, and
 | --- | --- | --- |
 | `EMAIL_CONFIRMATION` | `auto` | `auto` asks new accounts to confirm their address when email is set up, and not otherwise. `on` always asks (the link is then only in the log if email is not set up). `off` never asks |
 
+### Passwords
+
+New passwords must have at least 12 characters and must not be common ones; members can read the rules under [Choosing a password](Getting-started.md#choosing-a-password). Passwords that members already have keep working.
+
+Each new password is also looked up among passwords known from data leaks, using the range lookup of [Have I Been Pwned](https://haveibeenpwned.com/Passwords). Your server sends the first five characters of the password's SHA-1 hash to `api.pwnedpasswords.com` and compares the answers itself, so neither the password nor its full hash leaves your server, and nothing about the member is sent. If the service does not answer within three seconds, the password is accepted on the built-in rules alone, the log says the lookup was skipped, and it is not tried again for five minutes.
+
+| Variable | Default | What it does |
+| --- | --- | --- |
+| `PASSWORD_BREACH_CHECK` | `on` | `on` looks new passwords up as described above. `off` makes no outside call: new passwords are checked against the built-in list of common passwords only. Use `off` on a server with no way out to the internet |
+
+### Passkeys
+
+Members can add [passkeys](Getting-started.md#passkeys) to their own account and sign in with them instead of their password. There is nothing to switch on, but three things matter when you run the server:
+
+- **Passkeys need a secure, named address.** Browsers only offer them on an address that starts with `https://` and has a name (or on `localhost`). On a copy reached at a bare number such as `http://192.168.1.20:4000`, the passkey buttons do not appear and passwords work as always.
+- **A passkey is tied to the address it was made at**, taken from `APP_URL`, or `CLIENT_ORIGIN` without one. Set those before members start adding passkeys. If the site later moves to a different name, every passkey stops working and members have to sign in with their password and add new ones. A passkey made on a test copy never works on the live one, and the other way round.
+- **Whoever runs the server can remove a member's passkeys**, for example when a device was stolen and the member cannot sign in to remove it. Once you are sure it is them, run this. Every device signed in to the account is signed out and the account is emailed; the password and two-step sign-in are left as they are:
+
+  ```bash
+  npm run account:passkeys-off -- someone@example.com
+  ```
+
+| Variable | Default | What it does |
+| --- | --- | --- |
+| `PASSKEY_SITE` | the name in `APP_URL` | The name passkeys are tied to. Leave it unset unless you want passkeys to survive a move between a name and its parent: with Wrkbench at `www.example.com`, setting `example.com` keeps passkeys working if you later serve it at `example.com` or `app.example.com`. It must be the name people open Wrkbench at or a parent of it, or the server refuses to start. **Decide before members add passkeys: changing it later stops every passkey already made** |
+
 ### Two-step sign-in
 
 Members can turn on [two-step sign-in](Getting-started.md#two-step-sign-in) for their own account. There is nothing to set up. Two things to know when you run the server:
