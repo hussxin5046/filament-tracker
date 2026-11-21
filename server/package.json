@@ -20,6 +20,7 @@
     "db:backups": "tsx --env-file-if-exists=.env scripts/backup.ts list",
     "db:restore": "tsx --env-file-if-exists=.env scripts/backup.ts restore",
     "reference:filaments": "tsx scripts/import-filaments.ts",
+    "reference:passwords": "tsx scripts/import-common-passwords.ts",
     "test": "vitest run",
     "reference:hms": "tsx scripts/import-hms.ts"
   },

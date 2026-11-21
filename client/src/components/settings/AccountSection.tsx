@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/Button';
 import { Muted, SectionTitle } from '@/components/ui/Display';
 import { Checkbox, FormGrid, TextField } from '@/components/ui/Form';
 import { Modal } from '@/components/ui/Modal';
+import { NewPasswordField } from '@/components/ui/NewPasswordField';
 import { useAction, useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
+import { weakness } from '@/lib/passwordRules';
 import { SerialSaver } from '@/lib/serialSave';
 import type { User } from '@/lib/types';
 import styles from '@/components/settings/Settings.module.css';
@@ -55,6 +57,7 @@ export function AccountSection() {
   const { run, busy } = useAction();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
+  const [refused, setRefused] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -77,6 +80,8 @@ export function AccountSection() {
     if (await run(() => changePassword(current, next), 'Password changed. Other devices were signed out.')) {
       setCurrent('');
       setNext('');
+    } else {
+      setRefused(next);
     }
   };
 
@@ -99,19 +104,10 @@ export function AccountSection() {
       >
         <FormGrid>
           <TextField label="Current password" type="password" value={current} onChange={setCurrent} autoComplete="current-password" required />
-          <TextField
-            label="New password"
-            type="password"
-            value={next}
-            onChange={setNext}
-            autoComplete="new-password"
-            minLength={8}
-            hint="8 to 72 characters."
-            required
-          />
+          <NewPasswordField label="New password" value={next} onChange={setNext} owner={user} refused={refused} required />
         </FormGrid>
         <div>
-          <Button type="submit" variant="primary" disabled={busy || !current || next.length < 8}>
+          <Button type="submit" variant="primary" disabled={busy || !current || weakness(next, user) !== null}>
             Change password
           </Button>
         </div>

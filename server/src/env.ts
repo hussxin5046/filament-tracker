@@ -34,6 +34,10 @@ const schema = z.object({
   // Whether a new account must open a link sent to its address before it can be added to someone else's workspace.
   // "auto" asks for it when email can actually be sent (RESEND_API_KEY or SMTP_URL), and not otherwise.
   EMAIL_CONFIRMATION: z.enum(['auto', 'on', 'off']).default('auto'),
+  // Whether a new password is looked up among passwords known from data leaks (the Have I Been Pwned range
+  // lookup: neither the password nor its full hash is sent). "off" makes no outside call and uses only the
+  // built-in list of common passwords.
+  PASSWORD_BREACH_CHECK: z.enum(['on', 'off']).default('on'),
   // Where the app is reached, for links in emails. Defaults to CLIENT_ORIGIN.
   APP_URL: z.string().optional(),
   // Connected printers. PRINTERS_ENABLED=false hides the feature and refuses bridges.

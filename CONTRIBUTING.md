@@ -92,6 +92,7 @@ Where to find things:
 | `server/src/routes/` | The REST API. Everything under `/api/workspaces/:id` is membership- and role-checked |
 | `server/src/auth.ts` | Sign-in tokens and role checks (see [Roles](#roles) below) |
 | `server/src/services/twoStep.ts` | Two-step sign-in: authenticator codes (RFC 6238), how the secret is stored, recovery codes. The routes are in `server/src/routes/auth.ts`; the host's off switch is `server/scripts/two-step-off.ts` |
+| `server/src/services/passwordRules.ts`, `passwords.ts` | What a new password must pass (length, the built-in list of common passwords in `server/data/passwords/common.txt`), and the lookup among leaked passwords. `client/src/lib/passwordRules.ts` shows the same rules while typing: change both together |
 | `server/src/services/attempts.ts` | Counting tries at something that must not be guessed (passwords), per account, in the database so a restart does not reset it |
 | `server/src/idempotency.ts` | Idempotency keys: a POST repeated with the same `Idempotency-Key` is answered from memory instead of running twice. The web app sends one with every POST (`client/src/lib/idempotency.ts`) |
 | `server/src/services/` | Business logic: stock, jobs and the queue, projects, maintenance, the daily report, the reorder list, spool tags, email, uploads |
@@ -138,6 +139,18 @@ npm run reference:filaments -w server -- --dir /tmp/spoolmandb
 ```
 
 The output is sorted, so the diff shows only what changed upstream. Material codes the import cannot place are listed and filed under "Other"; add a rule to `MATERIAL_RULES` in `server/scripts/import-filaments.ts` if one deserves its own entry. `npm test -w server` checks the data.
+
+The built-in list of common passwords comes from [SecLists](https://github.com/danielmiessler/SecLists) (MIT licence, credited in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)). To refresh it:
+
+```bash
+git clone --depth 1 https://github.com/danielmiessler/SecLists /tmp/seclists
+```
+
+```bash
+npm run reference:passwords -w server -- --dir /tmp/seclists
+```
+
+It writes the server's list and the web app's copy of it; a server test fails if the two differ.
 
 ## Connected printers
 

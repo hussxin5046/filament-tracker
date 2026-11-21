@@ -101,6 +101,16 @@ With email set up, a new account is also sent a link to confirm its address, and
 | --- | --- | --- |
 | `EMAIL_CONFIRMATION` | `auto` | `auto` asks new accounts to confirm their address when email is set up, and not otherwise. `on` always asks (the link is then only in the log if email is not set up). `off` never asks |
 
+### Passwords
+
+New passwords must have at least 12 characters and must not be common ones; members can read the rules under [Choosing a password](Getting-started.md#choosing-a-password). Passwords that members already have keep working.
+
+Each new password is also looked up among passwords known from data leaks, using the range lookup of [Have I Been Pwned](https://haveibeenpwned.com/Passwords). Your server sends the first five characters of the password's SHA-1 hash to `api.pwnedpasswords.com` and compares the answers itself, so neither the password nor its full hash leaves your server, and nothing about the member is sent. If the service does not answer within three seconds, the password is accepted on the built-in rules alone, the log says the lookup was skipped, and it is not tried again for five minutes.
+
+| Variable | Default | What it does |
+| --- | --- | --- |
+| `PASSWORD_BREACH_CHECK` | `on` | `on` looks new passwords up as described above. `off` makes no outside call: new passwords are checked against the built-in list of common passwords only. Use `off` on a server with no way out to the internet |
+
 ### Two-step sign-in
 
 Members can turn on [two-step sign-in](Getting-started.md#two-step-sign-in) for their own account. There is nothing to set up. Two things to know when you run the server:

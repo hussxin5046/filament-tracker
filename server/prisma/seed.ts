@@ -11,8 +11,9 @@ async function main() {
   const email = (process.env.SEED_EMAIL ?? '').trim().toLowerCase();
   const password = process.env.SEED_PASSWORD ?? '';
   const name = process.env.SEED_NAME ?? 'Demo Maker';
-  if (!email || password.length < 8) {
-    throw new Error('Set SEED_EMAIL and SEED_PASSWORD (8+ characters) in server/.env before seeding.');
+  // The same length a new account is asked for. The other rules are not applied to a development password.
+  if (!email || [...password].length < 12) {
+    throw new Error('Set SEED_EMAIL and SEED_PASSWORD (12 or more characters) in server/.env before seeding.');
   }
 
   const user = await prisma.user.upsert({

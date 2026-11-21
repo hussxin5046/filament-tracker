@@ -82,8 +82,9 @@ describe('signing in', () => {
 
   it('takes new passwords of up to 72 bytes, and still signs in with a longer one set before that limit', async () => {
     const register = (address: string, password: string) => app.call('POST', '/auth/register', '', { email: address, password, name: 'New' });
-    expect((await register('ascii72@example.test', 'a'.repeat(72))).status).toBe(201);
-    const tooLong = await register('ascii73@example.test', 'a'.repeat(73));
+    const fits = 'correct horse battery staple '.repeat(3).slice(0, 72);
+    expect((await register('ascii72@example.test', fits)).status).toBe(201);
+    const tooLong = await register('ascii73@example.test', `${fits}x`);
     expect(tooLong.status).toBe(400);
     expect(tooLong.body?.error).toMatch(/at most 72 characters/);
     // 19 emoji are 19 characters but 76 bytes.

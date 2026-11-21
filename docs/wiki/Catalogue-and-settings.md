@@ -89,7 +89,7 @@ A hidden page is only out of the navigation. It still opens from a link, a bookm
 **Settings**, **Your account**:
 
 - **Daily report**: untick **Open the daily report on my first visit each day** to stop it opening by itself. See [the daily report](Dashboard-and-reports.md#daily-report).
-- **Change password**. This signs you out everywhere else.
+- **Change password**. The new one needs at least 12 characters; see [Choosing a password](Getting-started.md#choosing-a-password). This signs you out everywhere else.
 - **Other devices**: sign out every device except this one, for example after using a shared computer.
 - **Delete account**: removes your account and every workspace that only you belong to. Workspaces you share stay with the other members. If you are the only owner of a shared workspace, make someone else an owner first.
 
