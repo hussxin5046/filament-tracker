@@ -23,7 +23,7 @@ Common problems and what to do about them. Problems with connected printers and 
 | The request form says "Attach at least one file" | Every request needs at least one file for the workshop to check |
 | The daily report did not open today | It only opens once per person, workspace and day on each device. Use **Daily report** in the sidebar |
 | A maintenance task shows as due straight away | Log the last service you actually did with **Done**, so the clock starts from then. See [Maintenance](Maintenance.md#when-a-task-is-due) |
-| Stock went down by mistake | An admin can press **Undo** on the change under **Activity** |
+| Stock went down by mistake | Straight after an admin's change, press **Undo** on the message that confirms it. Later, an admin can press **Undo** on the change under **Activity** |
 | The app looks out of date after an update | Reload the page. Wrkbench installs as an app and refreshes itself, but an open tab can hold the old version until reloaded |
 
 ## Running your own copy

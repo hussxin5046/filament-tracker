@@ -85,6 +85,8 @@ The sidebar has one entry per screen. On a phone, four of them sit in a bar at t
 
 A red number on a sidebar entry counts things waiting there: overdue maintenance, items to reorder, requests to check.
 
+What you see updates by itself when someone else makes a change. If the connection drops, or you switch to another window and come back, Wrkbench fetches the latest figures straight away, so a screen left open on the workshop PC does not go stale.
+
 On a phone, anything that opens over the screen (an item, a form, **More**) slides up from the bottom. To close it, drag the bar at its top downwards and let go, flick it down, or press the **X**.
 
 ### Search
