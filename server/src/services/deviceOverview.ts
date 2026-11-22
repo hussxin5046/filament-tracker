@@ -203,7 +203,43 @@ const temp = (label: string, t: { current: number | null; target: number | null 
  * The printer's state worded for the display. A printer that has never been connected to a bridge gives
  * "Not connected"; one that stopped reporting keeps its last figures with the reason as its state.
  */
-export function displayPrinter(name: string, state: PrinterState | null): DisplayPrinter {
+/** The stock spool Wrkbench has in a printer's slot, keyed by `<feeder key>:<position>` ("ams:0:2"). */
+export interface LinkedSpool {
+  material: string | null;
+  color: string | null;
+}
+
+/**
+ * The spools Wrkbench has in the slots of a printer's AMS units and spool holders, so the display shows the same
+ * spool as the web app. A printer only knows a spool without a Bambu Lab tag by the colour and material set for
+ * its slot, which is often left from the spool before.
+ */
+export async function linkedSpools(db: Db, workspaceId: string, machineId: string): Promise<Map<string, LinkedSpool>> {
+  const units = await db.subUnit.findMany({
+    where: { workspaceId, machineId, externalId: { not: null } },
+    select: {
+      externalId: true,
+      slots: { where: { itemId: { not: null } }, select: { position: true, item: { select: { fields: true, itemType: { select: { fields: { select: { key: true, label: true, fieldType: true } } } } } } } },
+    },
+  });
+  const linked = new Map<string, LinkedSpool>();
+  for (const unit of units) {
+    // "bambu:<serial>:ams:0" -> "ams:0"
+    const feederKey = unit.externalId!.split(':').slice(2).join(':');
+    for (const slot of unit.slots) {
+      if (!slot.item) continue;
+      const values = (slot.item.fields ?? {}) as Record<string, unknown>;
+      const fields = slot.item.itemType.fields;
+      const value = (key: string | undefined) => (key && typeof values[key] === 'string' ? (values[key] as string).trim() : '');
+      const material = value((fields.find((f) => f.key === 'material') ?? fields.find((f) => /material/i.test(f.label)))?.key);
+      const colour = value(fields.find((f) => f.fieldType === 'color')?.key);
+      linked.set(`${feederKey}:${slot.position}`, { material: material || null, color: /^#[0-9a-f]{6}$/i.test(colour) ? colour.toLowerCase() : null });
+    }
+  }
+  return linked;
+}
+
+export function displayPrinter(name: string, state: PrinterState | null, linked: Map<string, LinkedSpool> = new Map()): DisplayPrinter {
   const base = { name: forDisplay(name, 32), progress: null, left: null, job: null, layer: null, temps: null, error: null, trays: [] };
   if (!state) return { ...base, state: 'Not connected', tone: 'off' };
   const [phaseWord, phaseTone] = PHASE_WORDS[state.phase] ?? PHASE_WORDS.unknown;
@@ -219,11 +255,15 @@ export function displayPrinter(name: string, state: PrinterState | null): Displa
     const letter = feeder.kind === 'external' ? null : feederLetter(amsIndex++);
     for (const tray of feeder.trays) {
       if (trays.length >= MAX_TRAYS) break;
+      const loaded = tray.state === 'loaded';
+      // The spool Wrkbench has in this slot wins over what the printer reports, as in the web app.
+      const spool = loaded ? linked.get(`${feeder.key}:${tray.position}`) : undefined;
+      const reported = loaded && tray.colour && /^#[0-9a-f]{6}$/i.test(tray.colour) ? tray.colour.toLowerCase() : null;
       trays.push({
         label: letter ? `${letter}${tray.position}` : 'Ext',
         // The short material ("PLA", not "PLA Basic"): each spool gets about 40 pixels on the screen.
-        material: tray.state === 'loaded' ? forDisplay(tray.material ?? tray.subType ?? '', 8) || null : null,
-        color: tray.state === 'loaded' && tray.colour && /^#[0-9a-f]{6}$/i.test(tray.colour) ? tray.colour.toLowerCase() : null,
+        material: loaded ? forDisplay(spool?.material ?? tray.material ?? tray.subType ?? '', 8) || null : null,
+        color: spool?.color ?? reported,
         active: tray.active,
         empty: tray.state !== 'loaded',
       });

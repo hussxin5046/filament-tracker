@@ -12,7 +12,7 @@ import { rateLimit } from '@/rateLimit';
 import { notifyWorkspaceSoon } from '@/realtime';
 import { describeActivity, logSystemActivity } from '@/services/activity';
 import { boardOf, buildFor, compareVersions, firmwareFile, latestFirmware, MIN_UPDATABLE, type FirmwareManifest } from '@/services/firmware';
-import { buildOverview, displayPrinter, displayRow, forDisplay, itemSelect, locationTree, MAX_ROWS, POLL_SECONDS } from '@/services/deviceOverview';
+import { buildOverview, displayPrinter, linkedSpools, displayRow, forDisplay, itemSelect, locationTree, MAX_ROWS, POLL_SECONDS } from '@/services/deviceOverview';
 import { itemForKey, readTagKey, readUid, spoolKey, tagIdFor } from '@/services/deviceTags';
 import { appUrl } from '@/services/mail';
 import { assertInWorkspace, moveItems } from '@/services/stock';
@@ -340,7 +340,7 @@ deviceRouter.get('/overview', async (req, res) => {
   const update = await updateFor(device);
   const asked = typeof req.query.location === 'string' && req.query.location ? req.query.location : null;
   if (asked && !(await prisma.location.count({ where: { id: asked, workspaceId: device.workspaceId } }))) throw notFound('Location');
-  const overview = await buildOverview(prisma, device, asked ?? device.locationId, printerBeside(device), update);
+  const overview = await buildOverview(prisma, device, asked ?? device.locationId, await printerBeside(device), update);
   if (typeof req.query.since === 'string' && req.query.since === overview.v) {
     res.status(304).end();
     return;
@@ -376,10 +376,10 @@ deviceRouter.post('/update-failed', async (req, res) => {
 });
 
 /** The status of the printer chosen as "beside" this display, from the live readings the bridge sends. */
-function printerBeside(device: AuthedDevice) {
+async function printerBeside(device: AuthedDevice) {
   if (!env.PRINTERS_ENABLED || !device.machineId || !device.machine) return null;
   const state = statesForWorkspace(device.workspaceId).find((s) => s.machineId === device.machineId) ?? null;
-  return displayPrinter(device.machine.name, state);
+  return displayPrinter(device.machine.name, state, state ? await linkedSpools(prisma, device.workspaceId, device.machineId) : undefined);
 }
 
 type TaggedItem = NonNullable<Awaited<ReturnType<typeof itemForKey>>>;

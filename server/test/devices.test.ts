@@ -281,6 +281,23 @@ describe('tapping a tag on the display', () => {
     expect(trays.length).toBeLessThanOrEqual(8);
   });
 
+  it('shows the spool Wrkbench has in a slot rather than what the printer last set there', async () => {
+    // The printer reports A2 as black PLA; the spool linked to that slot in Wrkbench is white PETG.
+    const unit = await prisma.subUnit.findFirstOrThrow({ where: { workspaceId, externalId: { endsWith: ':ams:0' } } });
+    const spool = await item('White PETG', { fields: { material: 'PETG', brand: 'Other', colour: '#FFFFFF' } });
+    await prisma.slot.upsert({
+      where: { subUnitId_position: { subUnitId: unit.id, position: 2 } },
+      create: { subUnitId: unit.id, position: 2, itemId: spool.id },
+      update: { itemId: spool.id },
+    });
+    const trays = ((await app.call('GET', '/device/overview', token)).body?.printer as { trays: Array<Record<string, unknown>> }).trays;
+    expect(trays[1]).toMatchObject({ label: 'A2', material: 'PETG', color: '#ffffff' });
+    // Slots without a linked spool still show what the printer reports.
+    expect(trays[0]).toMatchObject({ label: 'A1', material: 'PLA', color: '#000000' });
+    await prisma.slot.update({ where: { subUnitId_position: { subUnitId: unit.id, position: 2 } }, data: { itemId: null } });
+    await prisma.item.delete({ where: { id: spool.id } });
+  });
+
   it('refuses every change when changes from the display are switched off', async () => {
     await app.call('PATCH', ws(`/devices/${deviceId}`), admin, { canWrite: false });
     expect((await app.call('GET', '/device/tag/04A1B2C3D4E5F6', token)).body).toMatchObject({ canPutAway: false, insertInto: null });
