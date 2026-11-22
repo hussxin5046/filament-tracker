@@ -151,7 +151,7 @@ Members can turn on [two-step sign-in](Getting-started.md#two-step-sign-in) for 
 | `UPLOAD_MIN_FREE_MB` | `100` | Uploads are refused while the disk has less than this free, in MB, so the database always has room to write. `0` never refuses |
 | `UPLOAD_KEEP_DAYS` | `90` | The files of a request that was rejected or finished are deleted this many days later. `0` keeps them for ever |
 
-Once a day the app removes those old files and looks at the disk. When less than twice `UPLOAD_MIN_FREE_MB` is free it says so in the log, and emails `ALERT_EMAIL` if that is set. Files already saved by a [nightly backup](#nightly-backups-to-a-bucket) stay in the bucket.
+Once a day the app removes those old files and looks at the disk. It writes the free space it finds to the log (`The disk has 2048 MB free`), so you can compare it with your host's own figures. When less than twice `UPLOAD_MIN_FREE_MB` is free it says so in the log, and emails `ALERT_EMAIL` if that is set. Files already saved by a [nightly backup](#nightly-backups-to-a-bucket) stay in the bucket.
 
 ### Connected printers
 
@@ -197,7 +197,7 @@ Set these and restart. Create an access key that can read, write and delete in t
 
 The first four go together: set all of them or none. With none, there are no backups and the log says so when the app starts.
 
-The app looks once an hour and makes a backup when the newest copy in the bucket is a day old, so a restart neither skips a night nor makes an extra copy. Each one is written to the log as `Backup db/<time>.db.gz saved`. A backup that fails is tried again the next hour.
+The app looks once an hour and makes a backup when the newest copy in the bucket is a day old, so a restart neither skips a night nor makes an extra copy. The log says when a backup starts, when the database copy is saved and how many uploaded files are left to send, then counts every 50 files, so a long first backup is not mistaken for a stall. Each finished one is written to the log as `Backup db/<time>.db.gz saved`. A backup that fails is tried again the next hour.
 
 Uploaded files are never removed from the bucket, even after they are deleted in Wrkbench. That way a server that comes back with an empty disk cannot empty the backup too. Delete them at the storage service if you need them gone.
 
