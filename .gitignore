@@ -2,6 +2,8 @@ node_modules/
 dist/
 dev-dist/
 *.db
+# Except Zebra's DataWedge profile, a shared settings file, not a database of ours.
+!docs/zebra/dwprofile_wrkbench.db
 *.db-journal
 .env
 server/uploads/

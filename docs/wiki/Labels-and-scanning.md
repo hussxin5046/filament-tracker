@@ -106,6 +106,14 @@ Then set up DataWedge, the scanning service already on the device:
 
 These are the settings Wrkbench was tested with on a TC56 (Android 8.1, Chrome 101). Nothing else in DataWedge needed changing.
 
+#### Or import the tested profile
+
+Instead of the steps above, you can import the profile that was used for testing. It sets the same things, for Chrome only, so other apps on the device keep scanning as before.
+
+1. On the device, open [the Wrkbench DataWedge profile](https://github.com/hussxin5046/filament-tracker/raw/main/docs/zebra/dwprofile_wrkbench.db) in Chrome to download it. Keep its file name, **dwprofile_wrkbench.db**: DataWedge only imports files named this way.
+2. Open **DataWedge**, then its menu (**⋮**) → **Settings** → **Import Profile**, and choose the downloaded file. The exact names vary between DataWedge versions.
+3. Check that a profile called **wrkbench** is now listed, with **Chrome** under **Associated apps**.
+
 ### If scans do nothing
 
 In handheld mode, check the bar at the top first: it must be green (**Ready to scan**). If it says **Tap the box, then scan**, tap the box and scan again.
