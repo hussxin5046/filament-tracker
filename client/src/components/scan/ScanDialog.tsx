@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { CircleAlert, CircleCheck, Nfc, ScanBarcode } from 'lucide-react';
+import { Camera, CameraOff, CircleAlert, CircleCheck, Nfc, ScanBarcode } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Form';
 import { Modal } from '@/components/ui/Modal';
@@ -11,6 +11,29 @@ import { listenForTags, nfcAvailable, nfcProblem, type TagContents, type TagSess
 import { stickerTag } from '@/lib/openspool';
 import { findByCode, parseScan, type Scan } from '@/lib/scan';
 import styles from '@/components/scan/Scan.module.css';
+
+/**
+ * On a mobile computer with a scanner built in (a Zebra TC56, for one), the scanner does not fire while the
+ * browser has the camera open. Turning the camera off is remembered on the device, for every Scan window.
+ */
+const CAMERA_KEY = 'wrkbench.scanCamera';
+
+function cameraWanted(): boolean {
+  try {
+    return localStorage.getItem(CAMERA_KEY) !== 'off';
+  } catch {
+    return true;
+  }
+}
+
+function rememberCamera(on: boolean) {
+  try {
+    if (on) localStorage.removeItem(CAMERA_KEY);
+    else localStorage.setItem(CAMERA_KEY, 'off');
+  } catch {
+    // Not remembered: it applies to this Scan window only.
+  }
+}
 
 export interface ScanNote {
   text: string;
@@ -44,11 +67,20 @@ export function ScanDialog({ title = 'Scan a label', hint, onClose, onScan }: Pr
   const { locations } = useCatalog();
   const video = useRef<HTMLVideoElement>(null);
   const [problem, setProblem] = useState('');
-  const [typed, setTyped] = useState('');
   const [testing, setTesting] = useState(false);
+  const [typed, setTyped] = useState('');
   const [log, setLog] = useState<Array<ScanNote & { id: number }>>([]);
   const nextId = useRef(1);
   const hasCamera = cameraAvailable();
+  const [cameraOn, setCameraOn] = useState(cameraWanted);
+  // The scanner test needs the built-in scanner, which cannot fire while the camera is open.
+  const showCamera = hasCamera && cameraOn && !testing;
+
+  const switchCamera = (on: boolean) => {
+    rememberCamera(on);
+    setProblem('');
+    setCameraOn(on);
+  };
 
   const note = (entry: ScanNote) => setLog((current) => [{ ...entry, id: nextId.current++ }, ...current].slice(0, 30));
 
@@ -80,7 +112,7 @@ export function ScanDialog({ title = 'Scan a label', hint, onClose, onScan }: Pr
   useScanHandler((raw) => void handle(raw));
 
   useEffect(() => {
-    if (!hasCamera || !video.current) return;
+    if (!showCamera || !video.current) return;
     let cancelled = false;
     let stop: (() => void) | undefined;
     startScanner(video.current, (text) => void latest.current(text))
@@ -95,7 +127,7 @@ export function ScanDialog({ title = 'Scan a label', hint, onClose, onScan }: Pr
       cancelled = true;
       stop?.();
     };
-  }, [hasCamera]);
+  }, [showCamera]);
 
   // ---- NFC (Chrome on Android): starts from a tap, then every tag held to the phone is read ----
   const [nfc, setNfc] = useState<'off' | 'on'>('off');
@@ -135,12 +167,24 @@ export function ScanDialog({ title = 'Scan a label', hint, onClose, onScan }: Pr
     <>
     <Modal title={title} onClose={onClose} onSubmit={submitTyped} footer={<Button onClick={onClose}>{onScan ? 'Done' : 'Close'}</Button>}>
       {hint && <p className={styles.note}>{hint}</p>}
-      {hasCamera && !problem ? (
-        <div className={styles.viewport}>
-          <video ref={video} className={styles.video} muted playsInline aria-label="Camera" />
-          <span className={styles.frame} aria-hidden />
+      {hasCamera && !cameraOn ? (
+        <div className={styles.cameraOff}>
+          <p className={styles.note}>The camera is off on this device, so a scanner built into it can fire.</p>
+          <Button size="sm" icon={Camera} onClick={() => switchCamera(true)}>
+            Use camera
+          </Button>
         </div>
-      ) : (
+      ) : showCamera && !problem ? (
+        <>
+          <div className={styles.viewport}>
+            <video ref={video} className={styles.video} muted playsInline aria-label="Camera" />
+            <span className={styles.frame} aria-hidden />
+          </div>
+          <Button variant="ghost" size="sm" icon={CameraOff} className={styles.testLink} onClick={() => switchCamera(false)}>
+            Turn off camera (for a device with a scanner built in)
+          </Button>
+        </>
+      ) : testing ? null : (
         <p className={styles.note}>{problem || 'The camera only works when Wrkbench is opened at a secure (https) address. You can still type or paste a code below.'}</p>
       )}
       <div className={styles.typed}>
