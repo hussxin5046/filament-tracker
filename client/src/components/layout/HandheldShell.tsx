@@ -48,22 +48,10 @@ function HandheldFrame() {
       if (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable]')) return;
       reclaim();
     };
-    // After the browser has moved the focus where it is going; this one may not be let through by Chrome.
-    let timer = 0;
-    const later = () => {
-      window.clearTimeout(timer);
-      timer = window.setTimeout(reclaim, 0);
-    };
-    reclaim();
+    // Only ever from a tap. Selecting it on its own (on load, or when the focus moves away) gets no scans on a
+    // TC56, and Chrome there can respond to it by zooming the page onto the field, which hides everything.
     document.addEventListener('click', afterTap);
-    document.addEventListener('focusout', later);
-    document.addEventListener('visibilitychange', later);
-    return () => {
-      window.clearTimeout(timer);
-      document.removeEventListener('click', afterTap);
-      document.removeEventListener('focusout', later);
-      document.removeEventListener('visibilitychange', later);
-    };
+    return () => document.removeEventListener('click', afterTap);
   }, []);
 
   // A scan on any handheld screen opens what was scanned, unless that screen is waiting for scans itself.
