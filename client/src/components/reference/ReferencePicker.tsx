@@ -86,6 +86,12 @@ export function ReferencePicker({ kinds, onClose, onCollect, onAdded, preset }: 
   };
 
   const kindInfo = summary?.kinds.find((k) => k.kind === kind);
+  // Inside the browse area, so the dialog is the same height on every tab.
+  const attribution = kind === 'filament' && summary && (
+    <p className={styles.attribution}>
+      Filament data from <a href={summary.attribution.filament.url} target="_blank" rel="noreferrer">{summary.attribution.filament.name}</a> ({summary.attribution.filament.licence} licence). Check temperatures against the label on your spool.
+    </p>
+  );
   const title = selected ? titleOf(selected) : 'Add from the catalogue';
 
   return (
@@ -135,6 +141,7 @@ export function ReferencePicker({ kinds, onClose, onCollect, onAdded, preset }: 
           {kind === 'finish' && (
             <ListBrowser kind="finish" group={(e) => e.kind} title={(e) => e.name} subtitle={(e) => [e.base, e.sheen, e.variants.map((v) => v.label).join(', ')].filter(Boolean).join(' · ')} onChoose={(entry) => choose({ kind: 'finish', entry })} />
           )}
+          {attribution}
         </div>
       )}
 
@@ -147,11 +154,7 @@ export function ReferencePicker({ kinds, onClose, onCollect, onAdded, preset }: 
 
       {selected && !onCollect && <AddOptions kind={selected.kind} category={kindInfo?.category ?? null} onChange={setOptions} />}
 
-      {kind === 'filament' && summary && (
-        <p className={styles.attribution}>
-          Filament data from <a href={summary.attribution.filament.url} target="_blank" rel="noreferrer">{summary.attribution.filament.name}</a> ({summary.attribution.filament.licence} licence). Check temperatures against the label on your spool.
-        </p>
-      )}
+      {selected && attribution}
     </Modal>
   );
 }

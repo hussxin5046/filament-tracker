@@ -284,7 +284,8 @@ export function Tabs<T extends string>({ tabs, active, onChange }: TabsProps<T>)
           role="tab"
           aria-selected={tab.id === active}
           className={`${styles.tab} ${tab.id === active ? styles.tabActive : ''}`}
-          onClick={() => withViewTransition(() => onChange(tab.id))}
+          // The page-wide fade draws the page over any open dialog, so tabs inside a dialog switch without it.
+          onClick={(event) => (event.currentTarget.closest('dialog') ? onChange(tab.id) : withViewTransition(() => onChange(tab.id)))}
         >
           {tab.label}
           {tab.count !== undefined && tab.count > 0 && <span className={styles.count}>{tab.count}</span>}
