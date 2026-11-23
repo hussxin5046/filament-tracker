@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { CircleAlert, LoaderCircle, type LucideIcon } from 'lucide-react';
 import { FocusPicker } from '@/components/layout/FocusPicker';
 import { iconFor, toneFor } from '@/lib/icons';
+import { ScrollFrame } from '@/components/ui/ScrollFrame';
 import { withViewTransition } from '@/lib/viewTransition';
 import styles from '@/components/ui/Display.module.css';
 
@@ -262,9 +263,9 @@ export function Chip({ active, onClick, children, count }: { active: boolean; on
 
 export function ChipRow({ children, label }: { children: ReactNode; label: string }) {
   return (
-    <div className={styles.chipRow} role="group" aria-label={label}>
+    <ScrollFrame scrollerClassName={styles.chipRow} watch={children} role="group" aria-label={label}>
       {children}
-    </div>
+    </ScrollFrame>
   );
 }
 
@@ -276,7 +277,7 @@ interface TabsProps<T extends string> {
 
 export function Tabs<T extends string>({ tabs, active, onChange }: TabsProps<T>) {
   return (
-    <div className={styles.tabs} role="tablist">
+    <ScrollFrame scrollerClassName={styles.tabs} watch={tabs} role="tablist">
       {tabs.map((tab) => (
         <button
           key={tab.id}
@@ -291,7 +292,7 @@ export function Tabs<T extends string>({ tabs, active, onChange }: TabsProps<T>)
           {tab.count !== undefined && tab.count > 0 && <span className={styles.count}>{tab.count}</span>}
         </button>
       ))}
-    </div>
+    </ScrollFrame>
   );
 }
 

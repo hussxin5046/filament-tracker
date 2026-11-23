@@ -1,0 +1,19 @@
+/*
+ * What every list that scrolls up and down shares (use with `composes`): it scrolls on its own without
+ * dragging the page or the dialog behind it, and the space for the scrollbar is kept so nothing shifts
+ * sideways when it appears.
+ */
+.scrollY {
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* A heading inside such a list stays at the top while its own items scroll past under it. */
+.stickyHeading {
+  position: sticky;
+  top: var(--sticky-top, 0);
+  z-index: 1;
+  background: var(--sticky-bg, var(--color-surface));
+}

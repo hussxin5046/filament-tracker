@@ -1,6 +1,7 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
+import { Plus } from 'lucide-react';
 import { IconButton } from '@/components/ui/Button';
+import { ScrollFrame } from '@/components/ui/ScrollFrame';
 import { StockMeter } from '@/components/items/StockMeter';
 import { Badge, Figure, Swatch, TypeIcon } from '@/components/ui/Display';
 import type { Catalog } from '@/hooks/useCatalog';
@@ -146,39 +147,9 @@ export function ItemBoard({ items, catalog, grouping, hideEmpty, canEdit, focusM
     };
   }, []);
 
-  // Sideways scroll buttons, shown only while there is more to see in that direction.
-  const [reach, setReach] = useState({ left: false, right: false });
-  const updateReach = useCallback(() => {
-    const board = boardRef.current;
-    if (!board) return;
-    const left = board.scrollLeft > 4;
-    const right = board.scrollLeft + board.clientWidth < board.scrollWidth - 4;
-    setReach((current) => (current.left === left && current.right === right ? current : { left, right }));
-  }, []);
-  useLayoutEffect(() => {
-    updateReach();
-    const board = boardRef.current;
-    if (!board) return;
-    const observer = new ResizeObserver(updateReach);
-    observer.observe(board);
-    for (const child of board.children) observer.observe(child);
-    return () => observer.disconnect();
-  }, [columns, updateReach]);
-
-  const nudge = (direction: -1 | 1) => {
-    const board = boardRef.current;
-    const column = board?.firstElementChild;
-    if (!board || !column) return;
-    const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
-    board.scrollBy({ left: direction * (column.getBoundingClientRect().width + 12), behavior });
-  };
-
   return (
-    <div className={styles.frame}>
-      {reach.left && <IconButton icon={ChevronLeft} label="Scroll left" className={`${styles.nudge} ${styles.nudgeLeft}`} onClick={() => nudge(-1)} />}
-      {reach.right && <IconButton icon={ChevronRight} label="Scroll right" className={`${styles.nudge} ${styles.nudgeRight}`} onClick={() => nudge(1)} />}
-      <div ref={boardRef} className={styles.board} role="list" aria-label={`Inventory by ${grouping}`} onScroll={updateReach}>
-        {columns.map((column) => (
+    <ScrollFrame scrollerRef={boardRef} scrollerClassName={styles.board} step="item" watch={columns} role="list" aria-label={`Inventory by ${grouping}`}>
+      {columns.map((column) => (
           <section key={column.id} className={styles.column} role="listitem" aria-label={column.title}>
             <header className={styles.columnHead}>
               <TypeIcon icon={column.icon} tone={column.tone} size="sm" />
@@ -210,8 +181,7 @@ export function ItemBoard({ items, catalog, grouping, hideEmpty, canEdit, focusM
             </div>
           </section>
         ))}
-      </div>
-    </div>
+    </ScrollFrame>
   );
 }
 
