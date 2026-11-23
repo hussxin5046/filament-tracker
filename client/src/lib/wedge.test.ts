@@ -59,4 +59,17 @@ describe('telling a scanner from a person typing', () => {
     expect(wedge.pending()).toBe(0);
     expect(type(wedge, '33334444', 5, 5000)).toBe('33334444');
   });
+
+  it('reads a code handed over in one piece, as a Zebra mobile computer does in Chrome', () => {
+    const wedge = createWedge();
+    expect(wedge.feed('Unidentified', 1000)).toBeNull();
+    wedge.feedText('https://www.example.com/s/abc123', 1010);
+    expect(wedge.feed('Enter', 1010)).toBe('https://www.example.com/s/abc123');
+  });
+
+  it('does not take a word typed on an on-screen keyboard, then Enter a moment later, for a scan', () => {
+    const wedge = createWedge();
+    wedge.feedText('hello', 1000);
+    expect(wedge.feed('Enter', 1400)).toBeNull();
+  });
 });

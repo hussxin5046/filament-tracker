@@ -70,3 +70,16 @@
 .active {
   color: var(--color-accent);
 }
+
+/* Holds the cursor so a scan has somewhere to land. Hidden, but still able to take the focus. */
+.scanField {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}

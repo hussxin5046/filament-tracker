@@ -93,13 +93,15 @@ Wrkbench tells a scanner from a keyboard by its speed: the code arrives all at o
 
 There is no app to install from a file. Open Wrkbench in Chrome on the device, then choose **Add to Home screen** from Chrome's menu: it gets its own icon and opens full screen. This needs Wrkbench at a secure address (one starting `https://`); at any other address it still works as a page in Chrome.
 
+Use **Handheld mode** on the device (see below). In Chrome, a Zebra mobile computer hands each scan to the text box that has the cursor, and drops it when no box has one. Handheld mode keeps a hidden box ready for scans at all times, without bringing up the on-screen keyboard. In the full Wrkbench, scans only arrive while you are typing in a box, such as **Or type a code** in the Scan window.
+
 The built-in scanner does not fire while Chrome has the camera open. Open **Scan** once and tap **Turn off camera (for a device with a scanner built in)**: the device remembers it, and the trigger then works in the Scan window too. **Use camera** turns it back on.
 
 Then set up DataWedge, the scanning service already on the device:
 
 1. Open **DataWedge** and choose **Profile0 (default)**, which applies to every app without a profile of its own.
 2. Check that **Barcode input** and **Keystroke output** are both on.
-3. Under **Keystroke output**, open **Basic data formatting** and turn on **Send ENTER key**.
+3. Under **Keystroke output**, open **Basic data formatting** and check that **Send data** and **Send ENTER key** are both on.
 
 ### If scans do nothing
 

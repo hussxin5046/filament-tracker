@@ -2,6 +2,10 @@
  * Telling a barcode scanner from a person at the keyboard. A handheld scanner (and a Zebra mobile computer set to
  * send keystrokes) types the code far faster than anyone can, then presses Enter. So: a run of characters with
  * no pause between them, ended by Enter, is a scan.
+ *
+ * Some scanners do not type one key per character. A Zebra mobile computer with Chrome hands the whole code to
+ * the selected text box at once, the way an on-screen keyboard enters a word, then presses Enter. That arrives
+ * as text (feedText), and counts the same.
  */
 
 export interface WedgeOptions {
@@ -17,6 +21,8 @@ export interface Wedge {
    * `modified` is true while Ctrl, Alt or the Command/Windows key is held: shortcuts are never part of a scan.
    */
   feed: (key: string, at: number, modified?: boolean) => string | null;
+  /** Feed text that arrived without key presses for its characters, with the time it arrived. */
+  feedText: (text: string, at: number) => void;
   /** How many characters of a possible scan have arrived so far. */
   pending: () => number;
 }
@@ -47,6 +53,12 @@ export function createWedge({ maxGapMs = 100, minLength = 4 }: WedgeOptions = {}
       buffer += key;
       last = at;
       return null;
+    },
+    feedText(text, at) {
+      if (!text) return;
+      if (buffer !== '' && at - last > maxGapMs) reset();
+      buffer += text;
+      last = at;
     },
     pending: () => buffer.length,
   };
