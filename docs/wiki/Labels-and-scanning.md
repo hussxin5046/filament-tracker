@@ -93,7 +93,7 @@ Wrkbench tells a scanner from a keyboard by its speed: the code arrives all at o
 
 There is no app to install from a file. Open Wrkbench in Chrome on the device, then choose **Add to Home screen** from Chrome's menu: it gets its own icon and opens full screen. This needs Wrkbench at a secure address (one starting `https://`); at any other address it still works as a page in Chrome.
 
-Use **Handheld mode** on the device (see below). In Chrome, a Zebra mobile computer hands each scan to the text box that has the cursor, and drops it when no box has one. Handheld mode keeps a hidden box ready for scans at all times, without bringing up the on-screen keyboard. In the full Wrkbench, scans only arrive while you are typing in a box, such as **Or type a code** in the Scan window.
+Use **Handheld mode** on the device (see below). In Chrome, a Zebra mobile computer hands each scan to the text box that has the cursor, and drops it when no box has one. Handheld mode has a **Ready to scan** bar for this, which never brings up the on-screen keyboard. In the full Wrkbench, scans only arrive while you are typing in a box, such as **Or type a code** in the Scan window.
 
 The built-in scanner does not fire while Chrome has the camera open. Open **Scan** once and tap **Turn off camera (for a device with a scanner built in)**: the device remembers it, and the trigger then works in the Scan window too. **Use camera** turns it back on.
 
@@ -122,6 +122,8 @@ On a mobile computer, the full Wrkbench has more on screen than a scanner needs.
 To switch a device to it, open **More** and choose **Handheld mode (for a scanner)**. The device remembers: from then on, Wrkbench and its home-screen icon open in handheld mode. **Full Wrkbench** at the top goes back to everything, and the device then opens the full Wrkbench again.
 
 In handheld mode:
+
+- **The bar at the top shows whether a scan will land.** Green **Ready to scan** means it will. If it says **Tap here, then scan**, tap it once: Chrome only lets a scan into a box you have tapped yourself. It also says this after you have typed an amount; tapping a button usually makes it ready again by itself.
 
 - **Scan any label**, or a maker's barcode or a location's code, on any screen and it opens. If several spools share a barcode, they are listed and you pick the one in your hand. **Find** also searches by name or code.
 - **An item** shows how much is left, with buttons to use some (admins can also add) and a box to set the exact amount. **Move to another location**, then scan the location's label, or pick it from the list.
