@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Hand, LayoutDashboard, MapPin, ScanLine, Search } from 'lucide-react';
-import { ScannerProvider, useScanHandler } from '@/components/scan/ScannerProvider';
+import { ScannerProvider, useScanHandler, useScanner } from '@/components/scan/ScannerProvider';
 import { useToast } from '@/components/ui/Toast';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useCatalog, useItems } from '@/hooks/useCatalog';
@@ -37,6 +37,21 @@ function HandheldFrame() {
   // back as it was after each scan. The bar shows whether the box has the cursor, so nobody scans into nothing.
   const scanField = useRef<HTMLInputElement>(null);
   const [ready, setReady] = useState(false);
+  const scanner = useScanner();
+
+  // Whatever lands in the box is a scan. Usually the scanner's keys are read as a scan before they get here (see
+  // ScannerProvider), and the box is left empty. When they are not, because the text came in some other form
+  // than expected, the box still holds it: read it when Enter comes, or once nothing more has arrived for a
+  // moment. Nobody types here (the box asks for no keyboard), so anything in it came from the scanner.
+  const settle = useRef(0);
+  const readBox = () => {
+    window.clearTimeout(settle.current);
+    const field = scanField.current;
+    const text = field?.value.trim() ?? '';
+    if (!field || text.length < 4) return;
+    field.value = '';
+    scanner.dispatch(text);
+  };
   useEffect(() => {
     const typingIn = (element: Element | null) =>
       element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement || (element instanceof HTMLElement && element.isContentEditable);
@@ -95,7 +110,17 @@ function HandheldFrame() {
           spellCheck={false}
           // The page never selects it on its own, only from a tap (see above), so having the cursor is ready.
           onFocus={() => setReady(true)}
+          onInput={() => {
+            window.clearTimeout(settle.current);
+            settle.current = window.setTimeout(readBox, 250);
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter') return;
+            event.preventDefault();
+            readBox();
+          }}
           onBlur={(event) => {
+            window.clearTimeout(settle.current);
             event.currentTarget.value = '';
             setReady(false);
           }}
