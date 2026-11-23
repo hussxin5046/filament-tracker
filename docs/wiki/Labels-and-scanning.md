@@ -102,8 +102,13 @@ Then set up DataWedge, the scanning service already on the device:
 1. Open **DataWedge** and choose **Profile0 (default)**, which applies to every app without a profile of its own.
 2. Check that **Barcode input** and **Keystroke output** are both on.
 3. Under **Keystroke output**, open **Basic data formatting** and check that **Send data** and **Send ENTER key** are both on.
+4. Leave **Intent output** and **IP output** off.
+
+These are the settings Wrkbench was tested with on a TC56 (Android 8.1, Chrome 101). Nothing else in DataWedge needed changing.
 
 ### If scans do nothing
+
+In handheld mode, check the bar at the top first: it must be green (**Ready to scan**). If it says **Tap the box, then scan**, tap the box and scan again.
 
 Open **Scan** and tap **Barcode scanner not working? Test it**. The **Scanner test** lists everything the scanner sends, the pause before each character, and whether Wrkbench read it as a scan. Nothing opens while it is open, and the camera is off so the scanner can fire.
 
@@ -142,5 +147,6 @@ Labels keep working after a workspace is exported and imported into an empty Wrk
 
 - A label stops working when its item or location is deleted. An item that was retired because past jobs used it says so when scanned.
 - If Wrkbench moves to a new address, labels printed before the move point at the old one. Keep the old address redirecting to the new one, or reprint.
-- Barcode scanners were checked by sending Wrkbench the keystrokes a scanner sends. They have not yet been checked on a physical Zebra scanner. If a mobile computer's scans do nothing, run the **Scanner test** above. Meanwhile, open **Scan**, tap **Or type a code** and scan again: that way always works. If scans are only read some of the time, set the scanner to send its characters with no delay between them.
+- **Checked on a Zebra TC56** (Android 8.1, Chrome 101) in handheld mode, with the DataWedge settings above: scanning item and location labels, moving an item by scanning a location, putting items away by scanning them, reading NFC stickers and OpenSpool tags, and writing a spool's sticker.
+- **Other mobile computers and USB or Bluetooth scanners** were checked by sending Wrkbench the keystrokes a scanner sends, not on the devices themselves. If scans do nothing, run the **Scanner test** above. Meanwhile, open **Scan**, tap **Or type a code** and scan again: that way always works.
 - Label printing was checked by producing the pages for sizes from 15 to 150 mm, measuring that no text is clipped, and reading every code back by program as a 203 and a 300 dpi printer would print it. It has not yet been checked on a physical label printer: if yours cuts off or shrinks the label, check the paper size, margins and scale in the print window first.
