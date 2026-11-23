@@ -93,6 +93,8 @@ Wrkbench tells a scanner from a keyboard by its speed: the code arrives all at o
 
 There is no app to install from a file. Open Wrkbench in Chrome on the device, then choose **Add to Home screen** from Chrome's menu: it gets its own icon and opens full screen. This needs Wrkbench at a secure address (one starting `https://`); at any other address it still works as a page in Chrome.
 
+The built-in scanner does not fire while Chrome has the camera open. Open **Scan** once and tap **Turn off camera (for a device with a scanner built in)**: the device remembers it, and the trigger then works in the Scan window too. **Use camera** turns it back on.
+
 Then set up DataWedge, the scanning service already on the device:
 
 1. Open **DataWedge** and choose **Profile0 (default)**, which applies to every app without a profile of its own.
@@ -101,7 +103,7 @@ Then set up DataWedge, the scanning service already on the device:
 
 ### If scans do nothing
 
-Open **Scan** and tap **Barcode scanner not working? Test it**. The **Scanner test** lists everything the scanner sends, the pause before each character, and whether Wrkbench read it as a scan. Nothing opens while it is open.
+Open **Scan** and tap **Barcode scanner not working? Test it**. The **Scanner test** lists everything the scanner sends, the pause before each character, and whether Wrkbench read it as a scan. Nothing opens while it is open, and the camera is off so the scanner can fire.
 
 1. Scan a label.
 2. Tap **Scan into this box** and scan the same label again.
