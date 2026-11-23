@@ -1,5 +1,6 @@
 .dialog {
   width: min(34rem, calc(100vw - var(--space-8)));
+  max-height: min(90vh, 52rem); /* Chrome before 108 has no dvh */
   max-height: min(90dvh, 52rem);
   padding: 0;
   border: var(--border);
@@ -124,6 +125,7 @@
   .lg {
     width: 100vw;
     max-width: 100vw;
+    max-height: 92vh; /* Chrome before 108 has no dvh */
     max-height: 92dvh;
     margin: auto 0 0;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;

@@ -9,6 +9,7 @@ import { useCatalog, useItems } from '@/hooks/useCatalog';
 import { findAllByCode, parseScan, type Scan } from '@/lib/scan';
 import { createWedge } from '@/lib/wedge';
 import styles from '@/components/scan/Scan.module.css';
+import { openModalCount } from '@/lib/dialogs';
 
 /** What a scan hands to the page it opens. */
 export interface ScanState {
@@ -124,7 +125,7 @@ export function ScannerProvider({ children }: { children: ReactNode }) {
 
   /** With no dialog asking for scans: open what was scanned, unless that would happen behind an open dialog. */
   const byDefault = (raw: string) => {
-    const dialogs = document.querySelectorAll('dialog:modal').length - (unknown === null ? 0 : 1);
+    const dialogs = openModalCount() - (unknown === null ? 0 : 1);
     if (dialogs > 0) toast('Close this first, then scan again.', 'danger');
     else openRaw(raw);
   };

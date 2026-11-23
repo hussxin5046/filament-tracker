@@ -2,6 +2,7 @@
   position: relative;
   overflow: hidden;
   aspect-ratio: 4 / 3;
+  max-height: 46vh; /* Chrome before 108 has no dvh */
   max-height: 46dvh;
   border-radius: var(--radius-lg);
   background: #000;

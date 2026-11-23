@@ -25,6 +25,7 @@ import { navigateWithTransition, pageArrived } from '@/lib/viewTransition';
 import type { Dashboard, JobRequest, MaintenanceData, ReorderData } from '@/lib/types';
 import { SETTINGS_TABS } from '@/pages/SettingsPage';
 import styles from '@/components/layout/AppShell.module.css';
+import { openModalCount } from '@/lib/dialogs';
 
 interface NavItem extends NavPage {
   /** Shown in the phone tab bar; the rest live under "More". */
@@ -106,7 +107,7 @@ export function AppShell() {
     const onKey = (event: KeyboardEvent) => {
       if (!isShortcut(event, SEARCH_SHORTCUT)) return;
       event.preventDefault();
-      setSearching((open) => (open ? false : !document.querySelector('dialog:modal')));
+      setSearching((open) => (open ? false : openModalCount() === 0));
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);

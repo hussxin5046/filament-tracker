@@ -7,6 +7,7 @@ import { useWorkspace } from '@/context/WorkspaceContext';
 import { useCatalog, useItems } from '@/hooks/useCatalog';
 import { handheldItemPath, handheldLocationPath, readHandheldScan, rememberHandheld } from '@/lib/handheld';
 import styles from '@/components/layout/HandheldShell.module.css';
+import { openModalCount } from '@/lib/dialogs';
 
 /**
  * The frame of handheld mode: a top bar and the screen below it. No camera and no fields that take the focus
@@ -31,16 +32,16 @@ function HandheldFrame() {
   useEffect(() => rememberHandheld(true), []);
 
   // A Zebra mobile computer in Chrome hands a scan to the selected text field, and drops it when there is none.
-  // Chrome only lets it into a field the person tapped, not one selected by the page on its own. So the "Ready to
-  // scan" bar is a field: tapping it once makes scans land. It asks for no on-screen keyboard, and is put back
-  // as it was after each scan. The bar shows whether it has the cursor, so nobody scans into nothing.
+  // Chrome only lets it into a field the person tapped, not one selected by the page on its own. So the bar at
+  // the top holds a visible box: tapping it once makes scans land. It asks for no on-screen keyboard, and is put
+  // back as it was after each scan. The bar shows whether the box has the cursor, so nobody scans into nothing.
   const scanField = useRef<HTMLInputElement>(null);
   const [ready, setReady] = useState(false);
   useEffect(() => {
     const typingIn = (element: Element | null) =>
       element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement || (element instanceof HTMLElement && element.isContentEditable);
     const reclaim = () => {
-      if (typingIn(document.activeElement) || document.hidden || document.querySelector('dialog:modal')) return;
+      if (typingIn(document.activeElement) || document.hidden || openModalCount() > 0) return;
       scanField.current?.focus({ preventScroll: true });
     };
     // Straight after a tap on a button or a link, while the tap still counts as the person's own.
@@ -77,22 +78,23 @@ function HandheldFrame() {
         </Link>
       </header>
       <label className={`${styles.ready} ${ready ? styles.isReady : styles.notReady}`}>
-        {ready ? <ScanLine size={18} aria-hidden /> : <Hand size={18} aria-hidden />}
-        <span>{ready ? 'Ready to scan' : 'Tap here, then scan'}</span>
+        <span className={styles.readyText}>
+          {ready ? <ScanLine size={18} aria-hidden /> : <Hand size={18} aria-hidden />}
+          {ready ? 'Ready to scan' : 'Tap the box, then scan'}
+        </span>
         <input
           ref={scanField}
           className={styles.scanField}
           inputMode="none"
           data-scan="capture"
           aria-label="Scanner input"
+          placeholder={ready ? 'Scan now' : 'Tap here'}
           autoComplete="off"
           autoCapitalize="off"
           autoCorrect="off"
           spellCheck={false}
-          // Ready only when the cursor got here from a tap: Chrome does not hand scans to a field the page
-          // selected on its own. Where the browser cannot say, trust it.
-          onFocus={() => setReady(navigator.userActivation?.isActive ?? true)}
-          onClick={() => setReady(true)}
+          // The page never selects it on its own, only from a tap (see above), so having the cursor is ready.
+          onFocus={() => setReady(true)}
           onBlur={(event) => {
             event.currentTarget.value = '';
             setReady(false);
