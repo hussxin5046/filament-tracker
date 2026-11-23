@@ -108,5 +108,7 @@
   border: 0;
   opacity: 0;
   caret-color: transparent;
+  /* Full-size text, so a phone's browser never zooms in on the field when it is selected. */
+  font-size: 16px;
   cursor: pointer;
 }
