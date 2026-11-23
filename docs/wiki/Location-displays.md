@@ -57,7 +57,7 @@ If the code was mistyped or has run out, the display shows a keyboard: make a ne
 
 ## Finding a spool
 
-Open a spool in Wrkbench, by scanning its [label](Labels-and-scanning.md#fetch-a-spool-with-a-scanner) or any other way, and press **Find**. The display nearest to where the spool is kept shows it at the top of its list under **Take this one**, with a bright outline that pulses, and goes to full brightness. Wrkbench says which display lit up and where the spool is.
+Open a spool in Wrkbench, by scanning its [label](Labels-and-scanning.md#fetch-a-spool-with-a-scanner) or any other way, and press **Where is it?**. The display nearest to where the spool is kept shows it at the top of its list under **Take this one**, with a bright outline that pulses, and goes to full brightness. Wrkbench says which display lit up and where the spool is.
 
 - It shows on the display within about 10 seconds.
 - A shelf's own display lights up, not the display of the rack the shelf is in.
@@ -70,7 +70,7 @@ Open a spool in Wrkbench, by scanning its [label](Labels-and-scanning.md#fetch-a
 
 When no display can light up, Wrkbench still says where the spool is: its location when no display shows it or the display is not connected, the printer and slot when it is loaded, or that it is on the move.
 
-**Find** and **Take out** are for operators, admins and owners. **Take out** shows on an item that is kept in a location and not loaded in a machine.
+**Where is it?** and **Take out** are for operators, admins and owners. **Take out** shows on an item that is kept in a location and not loaded in a machine.
 
 ## The printer beside it
 

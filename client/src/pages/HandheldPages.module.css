@@ -28,6 +28,17 @@
   margin-top: var(--space-2);
 }
 
+/* Fetching a spool: find it, take it out, load it. Side by side where they fit. */
+.fetch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.fetch > * {
+  flex: 1 1 8rem;
+}
+
 .where {
   display: flex;
   align-items: center;

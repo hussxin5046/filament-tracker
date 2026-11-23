@@ -72,7 +72,7 @@ For a connected printer there is a quicker way that needs no picking:
 2. Under **About to put it in?**, press **Next into** and the printer's name.
 3. Put the spool into the printer within two minutes. Whichever tray it goes into is linked to it, and the phone says where it went.
 
-To fetch the spool first, **Find** lights it up on its [location display](Location-displays.md#finding-a-spool) and **Take out** marks it on the move: see [Fetch a spool with a scanner](Labels-and-scanning.md#fetch-a-spool-with-a-scanner).
+To fetch the spool first, **Where is it?** lights it up on its [location display](Location-displays.md#finding-a-spool) and **Take out** marks it on the move: see [Fetch a spool with a scanner](Labels-and-scanning.md#fetch-a-spool-with-a-scanner).
 
 This is how a spool the printer cannot identify gets tied to the exact item in stock, with no reader at the printer. Nothing is sent to the printer: Wrkbench only watches which tray changes.
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { LocateFixed, Minus, Nfc, PackageOpen, Pencil, PlugZap, Plus, QrCode, Scissors, Trash2 } from 'lucide-react';
+import { FindNote, useFind } from '@/components/items/Find';
 import { StockMeter } from '@/components/items/StockMeter';
 import { LabelPrintDialog } from '@/components/labels/LabelPrintDialog';
 import { useScanHandler, useScanner } from '@/components/scan/ScannerProvider';
@@ -9,7 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge, Figure, Loading, Meter, Muted, SectionTitle, Swatch, TypeIcon } from '@/components/ui/Display';
 import { NumberField } from '@/components/ui/Form';
 import { Modal } from '@/components/ui/Modal';
-import { useAction, useOptimisticAction } from '@/components/ui/Toast';
+import { useOptimisticAction } from '@/components/ui/Toast';
 import { useWorkspace, useWsQuery } from '@/context/WorkspaceContext';
 import { useItems, type Catalog } from '@/hooks/useCatalog';
 import { useItemDelete, useStockChange } from '@/hooks/useUndo';
@@ -19,7 +20,7 @@ import { formatDateTime, formatFieldValue, formatHours, formatNumber, formatQuan
 import { isStickerTag, spoolFacts } from '@/lib/spoolMatch';
 import { MOVEMENT_REASON } from '@/lib/status';
 import { patchCached } from '@/lib/store';
-import type { FindAnswer, Item, Movement, Unit } from '@/lib/types';
+import type { Item, Movement, Unit } from '@/lib/types';
 import styles from '@/components/items/Items.module.css';
 
 interface Props {
@@ -41,30 +42,6 @@ export function stepsFor(item: Item, unit: Unit | undefined): number[] {
   return [1, 5];
 }
 
-const names = (displays: FindAnswer['displays']) => displays.map((display) => display.name).join(' and ');
-
-/** What a find came back with, in a sentence. `left` is the seconds the display stays lit. */
-function describeFind(found: FindAnswer, left: number): string {
-  const where = found.place ? ` It is in ${found.place}.` : '';
-  switch (found.state) {
-    case 'lit': {
-      const showing = found.displays.filter((display) => display.online && !display.outdated);
-      if (!showing.length) return `${names(found.displays)} needs a firmware update before it can light up.${where}`;
-      return `Lit up on ${names(showing)} for ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}.${where}`;
-    }
-    case 'offline':
-      return `${names(found.displays)} is not connected, so it cannot light up.${where}`;
-    case 'no-display':
-      return `No display shows where it is kept.${where}`;
-    case 'loaded':
-      return `It is loaded in ${found.place}.`;
-    case 'on-the-move':
-      return 'It is on the move: someone took it out.';
-    default:
-      return 'It has no location.';
-  }
-}
-
 export function ItemSheet({ item, catalog, onClose, onEdit, onAddOffcut, focusAmount }: Props) {
   const { wsPath, canEdit, canOperate, money } = useWorkspace();
   const runNow = useOptimisticAction();
@@ -77,36 +54,8 @@ export function ItemSheet({ item, catalog, onClose, onEdit, onAddOffcut, focusAm
   const [tagging, setTagging] = useState(false);
   const [loading, setLoading] = useState(false);
   const { items } = useItems();
-  // Looking for it: the display nearest to where it is kept lights its row, and this says where that is.
-  const { run, busy: asking } = useAction();
-  const [found, setFound] = useState<FindAnswer | null>(null);
-  const [now, setNow] = useState(() => Date.now());
-  const kept = item.locationId !== null && !item.slot;
-  const findPath = wsPath(`/items/${item.id}/find`)!;
-  const find = () =>
-    run(async () => {
-      setFound(await api.post<FindAnswer>(findPath));
-      setNow(Date.now());
-    });
-  const stopFinding = () => {
-    setFound(null);
-    return run(() => api.delete(findPath));
-  };
-  const takeOut = async () => {
-    if (await run(() => api.post(wsPath(`/items/${item.id}/take-out`)!), 'On the move. Press Load into… at the printer.')) setFound(null);
-  };
-  // A scan can swap the sheet to another item: what was said about the last one does not apply.
-  useEffect(() => setFound(null), [item.id]);
-  const lighting = found?.expiresAt ?? null;
-  useEffect(() => {
-    if (lighting === null) return;
-    const tick = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(tick);
-  }, [lighting]);
-  // The display stops by itself after two minutes, and when the item leaves its place (taken out at the display, say).
-  useEffect(() => {
-    if (found && ((lighting !== null && now >= lighting) || (!kept && (lighting !== null || found.state === 'no-display')))) setFound(null);
-  }, [found, lighting, now, kept]);
+  // Looking for it: the display nearest to where it is kept lights its row, and the sheet says where that is.
+  const finder = useFind(item);
   // Scanning the next item while this one is open goes straight to it, unless a dialog of this sheet is in the way.
   const scanner = useScanner();
   useScanHandler(labelling || tagging || loading ? null : scanner.openRaw);
@@ -174,12 +123,12 @@ export function ItemSheet({ item, catalog, onClose, onEdit, onAddOffcut, focusAm
             Print label
           </Button>
           {canOperate && (
-            <Button icon={LocateFixed} onClick={() => void find()} disabled={asking}>
-              Find
+            <Button icon={LocateFixed} onClick={() => void finder.find()} disabled={finder.busy}>
+              Where is it?
             </Button>
           )}
-          {kept && canOperate && (
-            <Button icon={PackageOpen} onClick={() => void takeOut()} disabled={asking}>
+          {finder.kept && canOperate && (
+            <Button icon={PackageOpen} onClick={() => void finder.takeOut()} disabled={finder.busy}>
               Take out
             </Button>
           )}
@@ -223,17 +172,7 @@ export function ItemSheet({ item, catalog, onClose, onEdit, onAddOffcut, focusAm
         </div>
       </div>
 
-      {found && (
-        <div className={styles.find} role="status">
-          <LocateFixed size={20} aria-hidden />
-          <span className={styles.findText}>{describeFind(found, lighting === null ? 0 : Math.max(0, Math.ceil((lighting - now) / 1000)))}</span>
-          {lighting !== null && (
-            <Button size="sm" onClick={() => void stopFinding()} disabled={asking}>
-              Stop
-            </Button>
-          )}
-        </div>
-      )}
+      <FindNote finder={finder} />
 
       <div className={styles.stock}>
         <div className={styles.stockFigure}>

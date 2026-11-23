@@ -140,7 +140,7 @@ In handheld mode:
 
 - **Scan any label**, or a maker's barcode or a location's code, on any screen and it opens. If several spools share a barcode, they are listed and you pick the one in your hand. **Find** also searches by name or code.
 - **An item** shows how much is left, with buttons to use some (admins can also add) and a box to set the exact amount. **Move to another location**, then scan the location's label, or pick it from the list.
-- **A spool to fetch**: **Find** lights it up on its location display, **Take out** marks it on the move, and **Load into…** puts it in a printer. See [Fetch a spool with a scanner](#fetch-a-spool-with-a-scanner).
+- **A spool to fetch**: **Where is it?** lights it up on its location display, **Take out** marks it on the move, and **Load into…** puts it in a printer. See [Fetch a spool with a scanner](#fetch-a-spool-with-a-scanner).
 - **A location** lists what is inside it. **Put items away here**, then scan each item: it is moved there at once. Tap **Done** when you have finished.
 
 - **NFC tags**: tap the **NFC** button at the top (on a device that can read NFC, with Wrkbench at an `https://` address), then hold a spool's sticker to the back of the device: the spool opens. An OpenSpool tag that Wrkbench did not write opens the full inventory with the spools it could be. Tap the button again to stop. See [Spool tags](Spool-tags.md).
@@ -153,7 +153,7 @@ What each role can do is the same as in the full Wrkbench: operators can use sto
 With the labels kept in one place, such as a board by the printers, a mobile computer finds a spool, takes it out and loads it. The buttons are the same in [handheld mode](#handheld-mode) and in the full Wrkbench:
 
 1. Scan the spool's label. The spool opens.
-2. Press **Find**. The [location display](Location-displays.md#finding-a-spool) where the spool is kept lights it up within about 10 seconds, and Wrkbench says which display and which location.
+2. Press **Where is it?**. The [location display](Location-displays.md#finding-a-spool) where the spool is kept lights it up within about 10 seconds, and Wrkbench says which display and which location.
 3. At the shelf, take the spool and say so: touch the lit row on the display, tap the spool on the display's tag reader, or press **Take out** in Wrkbench. The spool is now **on the move**.
 4. At the printer, load it one of two ways:
    - Press **Load into…**, then **Next into** and the printer's name, and put the spool in within two minutes. Whichever tray it goes into is linked to it.
@@ -164,7 +164,7 @@ Things to know:
 - **Press Next into at the printer, not at the labels.** Its two minutes start when you press it.
 - **Carry one spool of a kind at a time if you skip Next into.** With two spools of the same material and colour on the move, Wrkbench cannot tell which went in, links neither and says so in the activity log. See [Into a printer](Location-displays.md#into-a-printer).
 - **Take out matters.** A printer's report is only matched against spools that are on the move. A spool carried over without being taken out is not linked by itself.
-- With no display where the spool is kept, **Find** still says where it is, and **Take out** still works.
+- With no display where the spool is kept, **Where is it?** still says where it is, and **Take out** still works.
 
 ## After a backup is restored
 
