@@ -711,3 +711,14 @@ export interface AiStatus {
   /** Owners only: what this workspace has spent on it this month, in US dollars. */
   workspaceSpendUsd?: number;
 }
+
+/** Where an item is, and whether a location display was asked to light it up (POST /items/:id/find). */
+export interface FindAnswer {
+  state: 'lit' | 'offline' | 'no-display' | 'loaded' | 'on-the-move' | 'nowhere';
+  /** A location's path, or "X1C, AMS 1 slot 2". */
+  place: string | null;
+  /** The displays asked to light it. `outdated`: its firmware is too old to show it. */
+  displays: Array<{ name: string; online: boolean; outdated: boolean }>;
+  /** When the displays stop lighting it, in milliseconds (lit and offline only). */
+  expiresAt: number | null;
+}

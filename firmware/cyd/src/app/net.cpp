@@ -396,6 +396,19 @@ void tagCall(const Command &command) {
   if (status == 200) lastV[0] = '\0';  // what is stored here may have changed
 }
 
+/** The lit row was touched: the spool someone is looking for is taken out of this location. */
+void takeOut(const Command &command) {
+  char path[96];
+  snprintf(path, sizeof path, "/api/device/item/%s/take-out", command.arg);
+  const int status = request("POST", path, "{}");
+  if (status == 401) return unauthorized();
+  char message[96];
+  wb::parseMessage(response, responseLen, message, sizeof message);
+  if (!message[0]) wb::copyText(message, sizeof message, status == 200 ? "Taken out" : describeFailure(status));
+  post(ResultType::Action, status == 200, message);
+  lastV[0] = '\0';  // taken out or refused, what is lit here may have changed
+}
+
 void untagged() {
   const int status = request("GET", "/api/device/untagged");
   if (status == 401) return unauthorized();
@@ -441,6 +454,7 @@ void task(void *) {
           break;
         case CommandType::Refresh: lastV[0] = '\0'; nextPoll = 0; break;
         case CommandType::Untagged: if (settings.token[0]) untagged(); break;
+        case CommandType::TakeOut: if (settings.token[0]) takeOut(command); nextPoll = millis() + 1500; break;
         case CommandType::Forget:
           settings.token[0] = '\0';
           settings.code[0] = '\0';

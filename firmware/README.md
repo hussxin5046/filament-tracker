@@ -124,9 +124,14 @@ python -m ziglang c++ -std=gnu++17 -I lib/wb_core -I .pio/libdeps/test-board/Ard
 ## How it talks to the server
 
 The display uses its own token (`wbd_…`), which it gets once by sending the set-up code to
-`POST /api/device/pair`. After that it polls `GET /api/device/overview` every 30 seconds (304 when nothing
+`POST /api/device/pair`. After that it polls `GET /api/device/overview` every 10 seconds (304 when nothing
 changed). With a reader fitted, each tap is sent to `POST /api/device/tag/:uid/tap`, which tags the spool in or
 out and answers with what to show; the put-away, insert and link routes next to it serve the card's buttons.
+
+When a member looks for a spool kept at the display (**Find** on the item), the overview carries it as
+`find.row` (firmware 0.4.0 and later; older firmware ignores it). The display shows that row first, outlined
+and pulsing, at full brightness, for as long as the overview carries it, or until it has not heard from the
+server for a minute. Touching the row sends `POST /api/device/item/:id/take-out`.
 
 A Bambu Lab spool's own tag is a locked MIFARE Classic chip. The reader unlocks it with keys that follow from
 its serial (`lib/wb_bambu`, after the community's

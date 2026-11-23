@@ -39,7 +39,7 @@ Switch between views at the top of the screen. Wrkbench remembers your choice on
 
 Use the search box to find items by name, material, size or location. The **Category** and **Status** chips (low stock, worn, offcuts, loaded in a machine) narrow the list, and **Filters** adds **Location**, **Supplier** and **Sort by**: by name, lowest quantity first, or most recently changed.
 
-While any spool is **on the move**, the status filters gain **On the move**. A spool is on the move after it was taken out at a [location display](Location-displays.md#on-the-move) and before it is put away or loaded into a machine.
+While any spool is **on the move**, the status filters gain **On the move**. A spool is on the move after it was taken out, at a [location display](Location-displays.md#on-the-move) or with **Take out** on the spool, and before it is put away or loaded into a machine.
 
 With a barcode scanner, scan an item's label or barcode on any screen to open it, ready for the amount you used. See [Use a barcode scanner](Labels-and-scanning.md#use-a-barcode-scanner).
 

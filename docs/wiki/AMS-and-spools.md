@@ -48,7 +48,7 @@ The same link can be made from the spool's side, which suits a spool you are hol
 
 - Open the spool (scan its [label](Labels-and-scanning.md) or [tag](Spool-tags.md), or find it in Inventory) and press **Load into…** to pick its slot from a list, best matches first.
 - Or press **Next into** and the printer's name, then put the spool in: the tray that changes is linked to it by itself. This is **scan, then insert**, and it is the way to tell the printer's untagged spools apart. See [Spool tags](Spool-tags.md#scan-then-insert).
-- Or, with a [location display](Location-displays.md) that has a tag reader, just carry it over: a spool tapped out where it is kept is on the move, and when the printer reports a spool that fits it, the two are linked. See [Into a printer](Location-displays.md#into-a-printer).
+- Or take it out and carry it over: a spool taken out where it is kept (tapped at a [location display](Location-displays.md), or with **Take out** on the spool) is on the move, and when the printer reports a spool that fits it, the two are linked. See [Into a printer](Location-displays.md#into-a-printer).
 
 A spool with an NFC sticker is still an untagged spool to the printer, which cannot read the sticker.
 

@@ -55,6 +55,16 @@ export async function moveItems(db: Db, workspaceId: string, itemIds: string[], 
   return { moved: moving, summary, entityId: moving.length === 1 ? moving[0].id : null };
 }
 
+/**
+ * Take an item out of where it is kept: it has no location and is "on the move" until it is put away or a
+ * printer reports it loaded. `place` is the location it leaves, for the activity log; the caller writes the
+ * entry, since a member and a location display log differently.
+ */
+export async function takeOut(db: Db, item: { id: string; name: string }, place: string): Promise<string> {
+  await db.item.update({ where: { id: item.id }, data: { locationId: null, outSince: new Date() } });
+  return `Took ${item.name} out of ${place}: it is on the move`;
+}
+
 /** Ensure referenced rows belong to this workspace before linking to them. */
 export async function assertInWorkspace(
   db: Db,

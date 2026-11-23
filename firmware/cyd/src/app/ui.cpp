@@ -31,11 +31,15 @@ const lv_color_t OK = lv_color_hex(0x34C759);
 const lv_color_t WARN = lv_color_hex(0xFF9F0A);
 const lv_color_t DANGER = lv_color_hex(0xFF5C5C);
 const lv_color_t LOW_ROW = lv_color_hex(0x3A1D1F);
+const lv_color_t LIT_ROW = lv_color_hex(0x1B2C4A);
 
 constexpr int W = 320, H = 240, HEADER_H = 44;
 constexpr uint32_t BROWSE_RETURN_MS = 120000;  // back to the display's own location after 2 idle minutes
 constexpr uint32_t CARD_CLOSE_MS = 20000;
 constexpr uint32_t DIM_AFTER_MS = 5 * 60000;
+// A spool someone is looking for stays lit while the server says so. Out of touch with the server for this long,
+// nothing can say it was taken out, so the display stops by itself.
+constexpr uint32_t FIND_STALE_MS = 60000;
 
 enum class View { None, Setup, Busy, Code, Overview, Places, About, Printer };
 
@@ -45,6 +49,7 @@ View view = View::None;
 lv_obj_t *screen = nullptr;
 wb::Overview *overview = nullptr;  // owned here; replaced as new ones arrive
 bool browsing = false;
+char litFor[wb::ID_LEN] = "";  // the item the display is lit for, "" when nobody is looking for one
 
 // Overview widgets that change without rebuilding the screen.
 lv_obj_t *statusDot = nullptr;
@@ -334,12 +339,26 @@ void refreshStatus() {
   lv_obj_set_style_text_color(subtitle, online ? MUTED : WARN, 0);
 }
 
-void addRow(lv_obj_t *list, const wb::Item &item, lv_event_cb_t onClick = nullptr, void *data = nullptr) {
+/** `lit`: the spool someone is looking for. Its row has a bright outline that pulses, to catch the eye across a room. */
+void addRow(lv_obj_t *list, const wb::Item &item, lv_event_cb_t onClick = nullptr, void *data = nullptr, bool lit = false) {
   lv_obj_t *row = plainBox(list);
   lv_obj_set_size(row, lv_pct(100), 48);
-  lv_obj_set_style_bg_color(row, item.low ? LOW_ROW : SURFACE, 0);
+  lv_obj_set_style_bg_color(row, lit ? LIT_ROW : item.low ? LOW_ROW : SURFACE, 0);
   lv_obj_set_style_bg_opa(row, LV_OPA_COVER, 0);
   lv_obj_set_style_radius(row, 6, 0);
+  if (lit) {
+    lv_obj_set_style_border_color(row, ACCENT, 0);
+    lv_obj_set_style_border_width(row, 2, 0);
+    lv_anim_t pulse;
+    lv_anim_init(&pulse);
+    lv_anim_set_var(&pulse, row);
+    lv_anim_set_values(&pulse, LV_OPA_20, LV_OPA_COVER);
+    lv_anim_set_duration(&pulse, 600);
+    lv_anim_set_playback_duration(&pulse, 600);
+    lv_anim_set_repeat_count(&pulse, LV_ANIM_REPEAT_INFINITE);
+    lv_anim_set_exec_cb(&pulse, [](void *obj, int32_t opa) { lv_obj_set_style_border_opa(static_cast<lv_obj_t *>(obj), static_cast<lv_opa_t>(opa), 0); });
+    lv_anim_start(&pulse);  // ends with the row: LVGL drops an object's animations when it is deleted
+  }
   if (onClick) {
     lv_obj_add_flag(row, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_event_cb(row, onClick, LV_EVENT_CLICKED, data);
@@ -376,6 +395,16 @@ void addRow(lv_obj_t *list, const wb::Item &item, lv_event_cb_t onClick = nullpt
     lv_obj_set_style_bg_color(bar, item.low ? DANGER : ACCENT, LV_PART_INDICATOR);
     lv_obj_align(bar, LV_ALIGN_BOTTOM_RIGHT, -8, -9);
   }
+}
+
+/** The lit row was touched: take that spool out. The answer comes back as a toast. */
+void onTakeOut(lv_event_t *) {
+  if (!overview || !overview->hasFind) return;
+  net::Command command{};
+  command.type = net::CommandType::TakeOut;
+  wb::copyText(command.arg, sizeof command.arg, overview->find.id);
+  net::send(command);
+  toast("Taking it out...");
 }
 
 void showOverview() {
@@ -428,6 +457,12 @@ void showOverview() {
   lv_obj_set_flex_flow(list, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_scrollbar_mode(list, LV_SCROLLBAR_MODE_ACTIVE);
 
+  // A spool someone is looking for comes first, whatever else is on the list and wherever it would be sorted.
+  const bool lit = overview && overview->hasFind;
+  if (lit) {
+    label(list, overview->canWrite ? "Take this one: touch it when you have it" : "Take this one", &lv_font_montserrat_14, ACCENT);
+    addRow(list, overview->find, overview->canWrite ? onTakeOut : nullptr, nullptr, true);
+  }
   if (!overview) {
     label(list, "Waiting for the server...", &lv_font_montserrat_14, MUTED);
   } else if (!overview->hasLocation) {
@@ -436,9 +471,12 @@ void showOverview() {
     lv_obj_set_width(l, lv_pct(100));
     lv_label_set_long_mode(l, LV_LABEL_LONG_WRAP);
   } else if (overview->itemCount == 0) {
-    label(list, "Nothing is stored here.", &lv_font_montserrat_14, MUTED);
+    if (!lit) label(list, "Nothing is stored here.", &lv_font_montserrat_14, MUTED);
   } else {
-    for (size_t i = 0; i < overview->itemCount; i++) addRow(list, overview->items[i]);
+    for (size_t i = 0; i < overview->itemCount; i++) {
+      if (lit && strcmp(overview->items[i].id, overview->find.id) == 0) continue;  // already at the top
+      addRow(list, overview->items[i]);
+    }
     if (overview->total > static_cast<int>(overview->itemCount)) {
       char more[48];
       snprintf(more, sizeof more, "+%d more in Wrkbench", overview->total - static_cast<int>(overview->itemCount));
@@ -850,7 +888,12 @@ void handle(net::Result &result) {
     case net::ResultType::Overview: {
       free(overview);
       overview = static_cast<wb::Overview *>(result.data);
-      if (view == View::Overview || view == View::Busy || view == View::None) showOverview();
+      // Someone started looking for a spool kept here: whatever was on screen, show it lit in its own location.
+      const bool newlyLit = overview && overview->hasFind && strcmp(litFor, overview->find.id) != 0;
+      wb::copyText(litFor, sizeof litFor, overview && overview->hasFind ? overview->find.id : "");
+      if (newlyLit && browsing) browse("");
+      const bool away = view == View::Places || view == View::About || view == View::Printer;
+      if (view == View::Overview || view == View::Busy || view == View::None || (newlyLit && away)) showOverview();
       else if (view == View::Printer) showPrinter();
       break;
     }
@@ -970,9 +1013,16 @@ void poll() {
   else if (st.phase == net::Phase::Offline && view == View::Busy && !overview) showMessageScreen(View::Busy, "Cannot reach Wrkbench", st.message, true);
   else if (st.phase == net::Phase::Pairing && view == View::Busy && st.message[0]) showMessageScreen(View::Busy, "Setting up", st.message, true);
   refreshStatus();
+  // Out of touch with the server while lit: nothing can say the spool was taken out, so stop.
+  if (overview && overview->hasFind && st.lastOkMs && millis() - st.lastOkMs > FIND_STALE_MS) {
+    overview->hasFind = false;
+    litFor[0] = '\0';
+    if (view == View::Overview) showOverview();
+  }
+  const bool lit = overview && overview->hasFind;
   if (browsing && view == View::Overview && display::idleMs() > BROWSE_RETURN_MS) browse("");
   if ((view == View::Places || view == View::About || view == View::Printer) && display::idleMs() > BROWSE_RETURN_MS) showOverview();
-  display::setBrightness(display::idleMs() > DIM_AFTER_MS && !card ? 40 : 255);
+  display::setBrightness(display::idleMs() > DIM_AFTER_MS && !card && !lit ? 40 : 255);
 }
 
 }  // namespace ui

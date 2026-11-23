@@ -12,10 +12,11 @@ import { rateLimit } from '@/rateLimit';
 import { notifyWorkspaceSoon } from '@/realtime';
 import { describeActivity, logSystemActivity } from '@/services/activity';
 import { boardOf, buildFor, compareVersions, firmwareFile, latestFirmware, MIN_UPDATABLE, type FirmwareManifest } from '@/services/firmware';
-import { buildOverview, displayPrinter, displayRow, forDisplay, itemSelect, locationTree, MAX_ROWS, POLL_SECONDS } from '@/services/deviceOverview';
+import { buildOverview, displayOnline as isOnline, displayPrinter, displayRow, forDisplay, itemSelect, locationTree, MAX_ROWS, POLL_SECONDS } from '@/services/deviceOverview';
 import { itemForKey, readTagKey, readUid, spoolKey, tagIdFor } from '@/services/deviceTags';
+import { endFind, findForDevice } from '@/services/find';
 import { appUrl } from '@/services/mail';
-import { assertInWorkspace, moveItems } from '@/services/stock';
+import { assertInWorkspace, moveItems, takeOut } from '@/services/stock';
 import { assignTag } from '@/services/tags';
 import { hashSecret, newDeviceToken, newPairingCode, normalizePairingCode } from '@/services/tokens';
 
@@ -28,8 +29,6 @@ import { hashSecret, newDeviceToken, newPairingCode, normalizePairingCode } from
  */
 
 const PAIRING_MINUTES = 10;
-/** A display polls every 30 s and its last-seen time is written at most once a minute, so 2.5 minutes is safe. */
-const ONLINE_MS = 150_000;
 const TOUCH_MS = 60_000;
 
 function requireEnabled(): void {
@@ -64,8 +63,6 @@ const deviceSelect = {
 } as const;
 
 type DeviceRow = Prisma.DeviceGetPayload<{ select: typeof deviceSelect }>;
-
-const isOnline = (lastSeenAt: Date | null) => lastSeenAt !== null && Date.now() - lastSeenAt.getTime() < ONLINE_MS;
 
 /**
  * What Settings says about a display's firmware: the newest build for its board, and whether it can be updated
@@ -340,7 +337,11 @@ deviceRouter.get('/overview', async (req, res) => {
   const update = await updateFor(device);
   const asked = typeof req.query.location === 'string' && req.query.location ? req.query.location : null;
   if (asked && !(await prisma.location.count({ where: { id: asked, workspaceId: device.workspaceId } }))) throw notFound('Location');
-  const overview = await buildOverview(prisma, device, asked ?? device.locationId, printerBeside(device), update);
+  // A spool someone is looking for is sent whatever the display is browsing: it goes back to its own location for it.
+  const sought = await findForDevice(prisma, device);
+  const tree = sought ? await locationTree(prisma, device.workspaceId) : null;
+  const find = sought && tree ? displayRow(sought, device.locationId, (id) => tree.byId.get(id)?.name ?? '') : null;
+  const overview = await buildOverview(prisma, device, asked ?? device.locationId, printerBeside(device), update, find);
   if (typeof req.query.since === 'string' && req.query.since === overview.v) {
     res.status(304).end();
     return;
@@ -459,9 +460,11 @@ deviceRouter.post('/tag/:uid/tap', async (req, res) => {
     const place = tree.byId.get(device.locationId)?.name ?? 'this location';
     const keptHere = item.locationId !== null && tree.subtree(device.locationId).includes(item.locationId);
     if (keptHere && !item.outSince) {
-      await prisma.item.update({ where: { id: item.id }, data: { locationId: null, outSince: new Date() } });
-      await logChange(device, 'item.move', `Took ${item.name} out of ${place}: it is on the move`, item.id);
-      message = 'Taken out: on the move';
+      // The spool this display is lit for, if any: taking a different one out is allowed, and said.
+      const sought = await findForDevice(prisma, device);
+      await logChange(device, 'item.move', await takeOut(prisma, item, place), item.id);
+      endFind(workspaceId, item.id);
+      message = sought && sought.id !== item.id ? `Taken out. Not the one asked for: ${forDisplay(sought.name, 30)}` : 'Taken out: on the move';
     } else {
       await prisma.item.update({ where: { id: item.id }, data: { locationId: device.locationId, outSince: null } });
       await logChange(device, 'item.move', `Put ${item.name} away in ${place}`, item.id);
@@ -471,6 +474,22 @@ deviceRouter.post('/tag/:uid/tap', async (req, res) => {
   const now = message ? await itemForKey(prisma, workspaceId, key) : item;
   if (message) tree = await locationTree(prisma, workspaceId);
   res.json({ ...knownTag(device, key, now ?? item, tree), ...(message ? { message } : {}) });
+});
+
+/**
+ * The lit row was touched: the spool someone is looking for is taken out, with no tag reader needed. Only the
+ * spool this display is lit for, so a display cannot take out whatever it likes.
+ */
+deviceRouter.post('/item/:id/take-out', async (req, res) => {
+  const device = deviceOf(res);
+  requireWrite(device);
+  const id = param(req, 'id');
+  const sought = await findForDevice(prisma, device);
+  if (!sought || sought.id !== id || !sought.locationId) throw new HttpError(409, 'Nobody is looking for that one now');
+  const tree = await locationTree(prisma, device.workspaceId);
+  await logChange(device, 'item.move', await takeOut(prisma, sought, tree.byId.get(sought.locationId)?.name ?? 'its location'), id);
+  endFind(device.workspaceId, id);
+  res.json({ ok: true, message: 'Taken out: on the move' });
 });
 
 /** Items in this display's location (and below) without a tag, to link a new sticker to. Printer-tagged spools are left out. */

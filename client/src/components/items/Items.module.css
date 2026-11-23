@@ -125,6 +125,22 @@
   gap: var(--space-1);
 }
 
+/* Where a looked-for item is, and the display lighting it up. */
+.find {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-accent-soft);
+}
+
+.findText {
+  flex: 1;
+  min-width: 0;
+}
+
 .stock {
   display: flex;
   flex-direction: column;

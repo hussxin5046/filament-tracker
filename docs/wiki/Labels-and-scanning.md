@@ -101,6 +101,24 @@ Then set up DataWedge, the scanning service already on the device:
 
 Devices on Android 8 can no longer update Chrome. Wrkbench runs on the last version they got, but that browser gets no more security fixes: use such a device on a network you trust.
 
+## Fetch a spool with a scanner
+
+With the labels kept in one place, such as a board by the printers, a mobile computer finds a spool, takes it out and loads it:
+
+1. Scan the spool's label. The spool opens.
+2. Press **Find**. The [location display](Location-displays.md#finding-a-spool) where the spool is kept lights it up within about 10 seconds, and Wrkbench says which display and which location.
+3. At the shelf, take the spool and say so: touch the lit row on the display, tap the spool on the display's tag reader, or press **Take out** in Wrkbench. The spool is now **on the move**.
+4. At the printer, load it one of two ways:
+   - Press **Load into…**, then **Next into** and the printer's name, and put the spool in within two minutes. Whichever tray it goes into is linked to it.
+   - Or put it in and set its filament on the printer's screen. Wrkbench links the tray to the spool on the move that fits what the printer reports.
+
+Things to know:
+
+- **Press Next into at the printer, not at the labels.** Its two minutes start when you press it.
+- **Carry one spool of a kind at a time if you skip Next into.** With two spools of the same material and colour on the move, Wrkbench cannot tell which went in, links neither and says so in the activity log. See [Into a printer](Location-displays.md#into-a-printer).
+- **Take out matters.** A printer's report is only matched against spools that are on the move. A spool carried over without being taken out is not linked by itself.
+- With no display where the spool is kept, **Find** still says where it is, and **Take out** still works.
+
 ## After a backup is restored
 
 Labels keep working after a workspace is exported and imported into an empty Wrkbench at the same address: items and locations get the same ids back. Importing into a Wrkbench that still holds the originals makes copies with new ids, so the old labels keep pointing at the originals. See [Backups, import and export](Backups-and-data.md).

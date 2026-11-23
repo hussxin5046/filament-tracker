@@ -36,6 +36,7 @@ enum class CommandType : uint8_t {
   PutAway,   // arg: tag key
   Insert,    // arg: tag key
   Link,      // arg: tag key, arg2: item id
+  TakeOut,   // arg: the id of the item the display is lit for. It is taken out: on the move
   Untagged,  // items here without a tag
   Forget,    // drop the token: the display asks for a new set-up code
 };
@@ -51,7 +52,7 @@ enum class ResultType : uint8_t {
   Overview,      // data: wb::Overview*, which the receiver frees
   Tag,           // data: wb::TagInfo*; message: what a tap did, "" for a plain look-up
   Untagged,      // data: wb::ItemList*
-  Action,        // ok + message (put away, insert, link)
+  Action,        // ok + message (put away, insert, link, take out)
   Paired,        // message: the display's name
   PairFailed,    // message: why
   Unauthorized,  // the token stopped working: removed or set up again elsewhere

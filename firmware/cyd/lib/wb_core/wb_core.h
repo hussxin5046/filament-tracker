@@ -92,6 +92,8 @@ struct Overview {
   PrinterInfo printer;
   bool hasUpdate;     // an admin asked for new firmware: fetch it from /api/device/firmware
   FirmwareOffer update;
+  bool hasFind;       // someone is looking for a spool kept here: its row is lit until this is gone
+  Item find;
 };
 
 /** What the server said about a tapped tag. */

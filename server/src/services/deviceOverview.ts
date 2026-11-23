@@ -11,8 +11,15 @@ import { round } from '@/services/stock';
  * has no spare memory, and versioned so an unchanged poll costs one short 304.
  */
 
-/** Seconds between a display's polls. Sent with every overview so it can be changed here without new firmware. */
-export const POLL_SECONDS = 30;
+/**
+ * Seconds between a display's polls. Sent with every overview so it can be changed here without new firmware.
+ * Short enough that a spool someone is looking for lights up while they walk over.
+ */
+export const POLL_SECONDS = 10;
+/** A display's last-seen time is written at most once a minute, so 2.5 minutes without one means it is off. */
+export const ONLINE_MS = 150_000;
+
+export const displayOnline = (lastSeenAt: Date | null) => lastSeenAt !== null && Date.now() - lastSeenAt.getTime() < ONLINE_MS;
 /** More than this many rows would not fit the display's memory; `total` still gives the real count. */
 export const MAX_ROWS = 40;
 const MAX_LOCATIONS = 60;
@@ -140,12 +147,12 @@ export interface Overview {
   locations: Array<{ id: string; name: string }>;
   printer: DisplayPrinter | null;
   update?: DisplayUpdate;
+  /** A spool someone is looking for that is kept here: the display lights its row until this is gone. */
+  find?: { row: DisplayRow };
 }
 
 // ---- The printer beside the display ---------------------------------------------------------
 
-/** Polls come faster while the printer beside the display is busy, so progress moves on screen. */
-export const BUSY_POLL_SECONDS = 15;
 const MAX_TRAYS = 8;
 
 /** ok: idle or done. busy: working. warn: paused, a warning, or figures that may be old. error: stopped or a fault. off: not reporting. */
@@ -258,6 +265,7 @@ export async function buildOverview(
   locationId: string | null,
   printer: DisplayPrinter | null = null,
   update: DisplayUpdate | null = null,
+  find: DisplayRow | null = null,
 ): Promise<Overview> {
   const tree = await locationTree(db, device.workspaceId);
   const shown = locationId ? tree.byId.get(locationId) : undefined;
@@ -274,7 +282,7 @@ export async function buildOverview(
     .sort((a, b) => a.name.localeCompare(b.name))
     .slice(0, MAX_LOCATIONS);
   const body = {
-    poll: printer?.tone === 'busy' ? BUSY_POLL_SECONDS : POLL_SECONDS,
+    poll: POLL_SECONDS,
     workspace: forDisplay(device.workspace.name),
     device: forDisplay(device.name),
     canWrite: device.canWrite,
@@ -286,6 +294,8 @@ export async function buildOverview(
     printer,
     // Only when there is one, so displays that are not updating see the same overview as before.
     ...(update ? { update } : {}),
+    // Inside what `v` is made from, so a display that already has everything else still hears of it.
+    ...(find ? { find: { row: find } } : {}),
   };
   const v = createHash('sha256').update(JSON.stringify(body)).digest('base64url').slice(0, 12);
   return { v, ...body };
