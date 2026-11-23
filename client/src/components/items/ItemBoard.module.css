@@ -22,6 +22,7 @@
   flex-direction: column;
   flex: 0 0 min(84vw, 20rem);
   min-width: 0;
+  max-height: calc(100vh - var(--tabbar-height) - 6rem - env(safe-area-inset-bottom)); /* Chrome before 108 has no dvh */
   max-height: calc(100dvh - var(--tabbar-height) - 6rem - env(safe-area-inset-bottom));
   border: var(--border);
   border-radius: var(--radius-lg);
@@ -188,6 +189,7 @@
   .column {
     flex: 1 0 16.5rem;
     max-width: 24rem;
+    max-height: calc(100vh - 5rem); /* Chrome before 108 has no dvh */
     max-height: calc(100dvh - 5rem);
   }
 }

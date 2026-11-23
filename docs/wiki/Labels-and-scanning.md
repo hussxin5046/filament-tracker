@@ -123,7 +123,7 @@ To switch a device to it, open **More** and choose **Handheld mode (for a scanne
 
 In handheld mode:
 
-- **The bar at the top shows whether a scan will land.** Green **Ready to scan** means it will. When handheld mode opens it says **Tap here, then scan**: tap it once. Chrome only lets a scan into a box you have tapped yourself. It also says this after you have typed an amount; tapping a button usually makes it ready again by itself.
+- **The bar at the top shows whether a scan will land.** Green **Ready to scan** means it will. When handheld mode opens it says **Tap the box, then scan**: tap the box in the bar once. Chrome only lets a scan into a box you have tapped yourself. It also says this after you have typed an amount; tapping a button usually makes it ready again by itself.
 
 - **Scan any label**, or a maker's barcode or a location's code, on any screen and it opens. If several spools share a barcode, they are listed and you pick the one in your hand. **Find** also searches by name or code.
 - **An item** shows how much is left, with buttons to use some (admins can also add) and a box to set the exact amount. **Move to another location**, then scan the location's label, or pick it from the list.
