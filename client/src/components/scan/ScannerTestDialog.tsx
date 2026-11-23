@@ -91,7 +91,7 @@ export function ScannerTestDialog({ onClose }: { onClose: () => void }) {
         Scan a label. Then tap the box below and scan the same label again. Tap Copy and send what it shows to whoever helps you set up the scanner.
         Nothing opens while this is open.
       </p>
-      <TextField label="Scan into this box" value={typed} onChange={setTyped} data-scan-test="box" autoComplete="off" autoCapitalize="off" />
+      <TextField label="Scan into this box" value={typed} onChange={setTyped} data-scan-test="box" data-scan="capture" autoComplete="off" autoCapitalize="off" />
       <textarea ref={reportRef} className={styles.report} readOnly rows={12} value={report} aria-label="What the scanner sent" />
       {copied && <p className={styles.note}>{copied}</p>}
     </Modal>

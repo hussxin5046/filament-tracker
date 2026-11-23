@@ -65,7 +65,9 @@ function restore(field: Editable, value: string) {
 
 /**
  * Listens for a barcode scanner on every screen. A handheld scanner, or a Zebra mobile computer set to send
- * keystrokes, types the code and presses Enter; that is told apart from a person typing by its speed.
+ * keystrokes, types the code and presses Enter; that is told apart from a person typing by its speed. A Zebra
+ * mobile computer in Chrome instead hands the whole code to the selected field at once: only a field can take
+ * it, which is why handheld mode keeps one selected.
  *
  * Where the scan goes depends on what has the focus:
  * - nothing typed into: the scan is acted on;
@@ -161,8 +163,22 @@ export function ScannerProvider({ children }: { children: ReactNode }) {
       handler(text);
     };
 
+    // A Zebra mobile computer in Chrome hands the selected field the whole code at once, then presses Enter.
+    const onText = (event: Event) => {
+      if (!(event instanceof InputEvent) || event.inputType !== 'insertText' || !event.data) return;
+      const editable = editableOf(event.target);
+      const starting = wedge.pending() === 0;
+      wedge.feedText(event.data, event.timeStamp);
+      // Before the text goes in, so a field marked data-scan="capture" can be put back as it was.
+      if (starting) began = editable && editable !== 'other' ? { field: editable, value: editable.value } : editable;
+    };
+
     window.addEventListener('keydown', onKey, true);
-    return () => window.removeEventListener('keydown', onKey, true);
+    window.addEventListener('beforeinput', onText, true);
+    return () => {
+      window.removeEventListener('keydown', onKey, true);
+      window.removeEventListener('beforeinput', onText, true);
+    };
   }, []);
 
   const scanner = useMemo<Scanner>(

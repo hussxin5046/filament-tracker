@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, MapPin, Search } from 'lucide-react';
 import { ScannerProvider, useScanHandler } from '@/components/scan/ScannerProvider';
@@ -30,6 +30,34 @@ function HandheldFrame() {
   // Opening handheld mode once makes it what this device opens.
   useEffect(() => rememberHandheld(true), []);
 
+  // A Zebra mobile computer in Chrome hands a scan to the selected text field, and drops it when there is none.
+  // So a hidden field holds the cursor whenever nothing else that takes typing does. It asks for no on-screen
+  // keyboard, and is marked to be put back as it was after each scan.
+  const scanField = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    let timer = 0;
+    const keep = () => {
+      window.clearTimeout(timer);
+      // After the browser has moved the focus where it is going.
+      timer = window.setTimeout(() => {
+        const active = document.activeElement;
+        const typing = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement || active instanceof HTMLSelectElement || (active instanceof HTMLElement && active.isContentEditable);
+        if (typing || document.hidden || document.querySelector('dialog:modal')) return;
+        scanField.current?.focus({ preventScroll: true });
+      }, 0);
+    };
+    keep();
+    document.addEventListener('focusout', keep);
+    document.addEventListener('visibilitychange', keep);
+    window.addEventListener('focus', keep);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener('focusout', keep);
+      document.removeEventListener('visibilitychange', keep);
+      window.removeEventListener('focus', keep);
+    };
+  }, []);
+
   // A scan on any handheld screen opens what was scanned, unless that screen is waiting for scans itself.
   useScanHandler((raw) => {
     navigator.vibrate?.(40);
@@ -51,6 +79,21 @@ function HandheldFrame() {
           <LayoutDashboard size={16} aria-hidden /> Full Wrkbench
         </Link>
       </header>
+      <input
+        ref={scanField}
+        className={styles.scanField}
+        inputMode="none"
+        data-scan="capture"
+        aria-label="Scanner input"
+        autoComplete="off"
+        autoCapitalize="off"
+        autoCorrect="off"
+        spellCheck={false}
+        tabIndex={-1}
+        onBlur={(event) => {
+          event.currentTarget.value = '';
+        }}
+      />
       <main className={styles.main}>
         <Outlet />
       </main>
