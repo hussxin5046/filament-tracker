@@ -7,7 +7,7 @@ import { useScanHandler, useScanner } from '@/components/scan/ScannerProvider';
 import { ScannerTestDialog } from '@/components/scan/ScannerTestDialog';
 import { useCatalog, useItems } from '@/hooks/useCatalog';
 import { cameraAvailable, cameraProblem, startScanner } from '@/lib/camera';
-import { listenForTags, nfcAvailable, nfcProblem, type TagContents, type TagSession } from '@/lib/nfc';
+import { BAMBU_TAG_NOTE, listenForTags, nfcAvailable, nfcProblem, type TagContents, type TagSession } from '@/lib/nfc';
 import { stickerTag } from '@/lib/openspool';
 import { findByCode, parseScan, type Scan } from '@/lib/scan';
 import styles from '@/components/scan/Scan.module.css';
@@ -143,7 +143,7 @@ export function ScanDialog({ title = 'Scan a label', hint, onClose, onScan }: Pr
     if (linked && linked.kind !== 'text') return void act(linked);
     const data = contents.json ? parseScan(contents.json) : null;
     if (data?.kind === 'openspool') return void act({ ...data, tagId });
-    note({ text: 'This tag is blank, or holds nothing Wrkbench reads. To write it, open a spool and choose "Spool tag".', tone: 'danger' });
+    note({ text: `This tag is blank, or holds nothing Wrkbench reads. To write a sticker, open a spool and choose "Spool tag". ${BAMBU_TAG_NOTE}`, tone: 'danger' });
   };
   const latestTag = useRef(onTag);
   latestTag.current = onTag;
