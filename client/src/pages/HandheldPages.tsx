@@ -15,7 +15,7 @@ import { useWorkspace } from '@/context/WorkspaceContext';
 import { useCatalog, useItems } from '@/hooks/useCatalog';
 import { useStockChange } from '@/hooks/useUndo';
 import { api } from '@/lib/api';
-import { formatNumber, formatQuantity, isLow, locationPath, parseNumber } from '@/lib/format';
+import { formatNumber, formatQuantity, isLow, itemPlace, locationPath, parseNumber } from '@/lib/format';
 import { handheldItemPath, handheldLocationPath, readHandheldScan } from '@/lib/handheld';
 import { spoolFacts } from '@/lib/spoolMatch';
 import { refreshAll } from '@/lib/store';
@@ -100,7 +100,7 @@ export function HandheldHomePage() {
           {found.items.length ? (
             <List>
               {found.items.map((item) => (
-                <ItemRow key={item.id} item={item} subtitle={locationPath(item.locationId, locations) || 'No location'} unit={item.unitId ? unitById.get(item.unitId) : undefined} />
+                <ItemRow key={item.id} item={item} subtitle={itemPlace(item, locations) || 'No location'} unit={item.unitId ? unitById.get(item.unitId) : undefined} />
               ))}
             </List>
           ) : (

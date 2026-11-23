@@ -18,12 +18,12 @@ import { useMachineFocus } from '@/context/FocusContext';
 import { useAction } from '@/components/ui/Toast';
 import { useWorkspace, useWsQuery } from '@/context/WorkspaceContext';
 import { useCatalog, useItems } from '@/hooks/useCatalog';
-import { fits, flattenLocations, formatQuantity, isLow, isWorn, locationPath, locationScope as scopeOf, parseNumber, summarizeFields } from '@/lib/format';
+import { UNIT_PLACE, fits, flattenLocations, formatQuantity, isLow, isWorn, locationPath, locationScope as scopeOf, parseNumber, summarizeFields } from '@/lib/format';
 import { api } from '@/lib/api';
 import { itemLabel } from '@/lib/labels';
 import { fromOpenSpool } from '@/lib/openspool';
 import { ITEM_KINDS } from '@/lib/reference';
-import type { Item, UnknownTag } from '@/lib/types';
+import type { Item, SubUnit, UnknownTag } from '@/lib/types';
 import itemStyles from '@/components/items/Items.module.css';
 import styles from '@/pages/InventoryPage.module.css';
 
@@ -125,8 +125,16 @@ export function InventoryPage() {
   const sizeFields = useMemo(() => type?.fields.filter((f) => f.isSizeDimension && f.fieldType === 'number') ?? [], [type]);
   const locations = useMemo(() => flattenLocations(catalog.locations), [catalog.locations]);
 
+  // Machine units (an AMS) are places too: the Location filter can pick one to see what is loaded in it.
+  const subUnits = useWsQuery<SubUnit[]>('/sub-units');
+  const units = useMemo(
+    () => (subUnits.data ?? []).filter((unit) => unit.slots.length > 0).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })),
+    [subUnits.data],
+  );
+  const unitId = locationId.startsWith(UNIT_PLACE) ? locationId.slice(UNIT_PLACE.length) : '';
+
   /** A location filter includes everything stored beneath it. */
-  const locationScope = useMemo(() => (locationId ? scopeOf(locationId, catalog.locations) : null), [locationId, catalog.locations]);
+  const locationScope = useMemo(() => (locationId && !unitId ? scopeOf(locationId, catalog.locations) : null), [locationId, unitId, catalog.locations]);
 
   const filtered = useMemo(() => {
     const words = query.toLowerCase().split(/\s+/).filter(Boolean);
@@ -137,6 +145,7 @@ export function InventoryPage() {
       if (typeId && item.itemTypeId !== typeId) return false;
       for (const flag of FLAGS) if (flags.has(flag.id) && !flag.test(item)) return false;
       if (locationScope && (!item.locationId || !locationScope.has(item.locationId))) return false;
+      if (unitId && item.slot?.subUnit.id !== unitId) return false;
       if (supplierId && item.supplierId !== supplierId) return false;
       if (sizing) {
         const have = sizeFields.map((f) => Number(item.fields[f.key]) || 0);
@@ -166,7 +175,7 @@ export function InventoryPage() {
       if (sort === 'recent') return b.updatedAt.localeCompare(a.updatedAt);
       return a.name.localeCompare(b.name, undefined, { numeric: true });
     });
-  }, [items, query, typeId, flags, locationScope, supplierId, sizeFields, needed, sort, catalog.typeById, catalog.locations, catalog.supplierById]);
+  }, [items, query, typeId, flags, locationScope, unitId, supplierId, sizeFields, needed, sort, catalog.typeById, catalog.locations, catalog.supplierById]);
 
   const changeView = (next: View) => {
     setView(next);
@@ -262,6 +271,18 @@ export function InventoryPage() {
                   {l.name}
                 </option>
               ))}
+              {units.length > 0 && (
+                <optgroup label="In machines">
+                  {units.map((unit) => {
+                    const machine = unit.machineId ? catalog.machineById.get(unit.machineId)?.name : '';
+                    return (
+                      <option key={unit.id} value={`${UNIT_PLACE}${unit.id}`}>
+                        {machine ? `${machine} › ${unit.name}` : unit.name}
+                      </option>
+                    );
+                  })}
+                </optgroup>
+              )}
             </SelectField>
             <SelectField label="Supplier" value={supplierId} onChange={setSupplierId}>
               <option value="">Any supplier</option>

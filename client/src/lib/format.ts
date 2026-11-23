@@ -104,6 +104,19 @@ export function locationPath(locationId: string | null, locations: Location[]): 
   return parts.join(' › ');
 }
 
+/** Prefix for a machine unit (an AMS) used where a location id is expected, such as the inventory's Location filter. */
+export const UNIT_PLACE = 'unit:';
+
+/** Is the item kept somewhere: on a location, or loaded in a machine unit such as an AMS? */
+export function isPutAway(item: Pick<Item, 'locationId' | 'slot'>): boolean {
+  return Boolean(item.locationId || item.slot);
+}
+
+/** "AMS 1 · slot 2" for a loaded item, else its location path. Empty when it is in neither. */
+export function itemPlace(item: Pick<Item, 'locationId' | 'slot'>, locations: Location[]): string {
+  return item.slot ? `${item.slot.subUnit.name} · slot ${item.slot.position}` : locationPath(item.locationId, locations);
+}
+
 /** A location and everything nested inside it, at any depth. */
 export function locationScope(locationId: string, locations: Location[]): Set<string> {
   const scope = new Set([locationId]);
