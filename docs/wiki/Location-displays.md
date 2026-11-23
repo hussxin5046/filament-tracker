@@ -92,6 +92,8 @@ On your own server, see [Self-hosting](Self-hosting.md) for where the firmware c
 
 ## The tag reader
 
+![Back of the CYD with four wires running from connector CN1 to the I²C header on a red PN532 NFC module](images/tag-reader-hardware.png)
+
 Wire the PN532 to the CYD's 4-pin connector marked **CN1**: 3.3V to VCC, GND to GND, **IO22 to SDA** and **IO27 to SCL**. The display finds the reader when it starts; without one it is a plain location display. Settings shows "tag reader connected" on its card.
 
 Hold a spool to the reader, by its NFC [sticker](Spool-tags.md) or, for a Bambu Lab spool, by the spool's own tag (on the side of the spool, near the hub). Keep it still until the card appears.
