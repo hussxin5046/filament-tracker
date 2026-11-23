@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { WifiOff } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
+import { HandheldShell } from '@/components/layout/HandheldShell';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Loading } from '@/components/ui/Display';
 import { ConfirmProvider } from '@/components/ui/Modal';
@@ -9,12 +10,14 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { FocusProvider } from '@/context/FocusContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { useWorkspace, WorkspaceProvider } from '@/context/WorkspaceContext';
+import { handheldRemembered } from '@/lib/handheld';
 import { ActivityPage } from '@/pages/ActivityPage';
 import { AuthPage } from '@/pages/AuthPage';
 import { NoticesPage, PrivacyPage, TermsPage } from '@/pages/LegalPages';
 import { ConfirmEmailPage } from '@/pages/ConfirmEmailPage';
 import { ForgotPasswordPage, ResetPasswordPage } from '@/pages/PasswordResetPages';
 import { InventoryPage } from '@/pages/InventoryPage';
+import { HandheldHomePage, HandheldItemPage, HandheldLocationPage, HandheldLocationsPage } from '@/pages/HandheldPages';
 import { JobsPage } from '@/pages/JobsPage';
 import { LabelLinkPage } from '@/pages/LinkPages';
 import { LocationsPage } from '@/pages/LocationsPage';
@@ -43,7 +46,7 @@ function RequireAuth() {
   return <Outlet />;
 }
 
-function RequireWorkspace() {
+function RequireWorkspace({ handheld = false }: { handheld?: boolean }) {
   const { workspace, loading, error, retry } = useWorkspace();
   if (loading) return <Loading label="Opening your workspace" />;
   if (!workspace && error) {
@@ -57,9 +60,14 @@ function RequireWorkspace() {
   // Keyed so that switching workspace resets every screen's local state.
   return (
     <FocusProvider key={workspace.id} workspaceId={workspace.id}>
-      <AppShell />
+      {handheld ? <HandheldShell /> : <AppShell />}
     </FocusProvider>
   );
+}
+
+/** A device set to handheld mode opens it, including from its home-screen icon, which always starts at "/". */
+function HomePage() {
+  return handheldRemembered() ? <Navigate to="/handheld" replace /> : <OverviewPage />;
 }
 
 export function App() {
@@ -88,7 +96,7 @@ export function App() {
                   <Route path="/s/:id" element={<LabelLinkPage kind="item" />} />
                   <Route path="/l/:id" element={<LabelLinkPage kind="location" />} />
                   <Route element={<RequireWorkspace />}>
-                    <Route index element={<OverviewPage />} />
+                    <Route index element={<HomePage />} />
                     <Route path="inventory" element={<InventoryPage />} />
                     <Route path="locations" element={<LocationsPage />} />
                     <Route path="locations/:id" element={<LocationsPage />} />
@@ -100,6 +108,13 @@ export function App() {
                     <Route path="settings" element={<SettingsPage />} />
                     {/* Appearance used to be a page of its own; old links land in its Settings section. */}
                     <Route path="appearance" element={<Navigate to="/settings?tab=appearance" replace />} />
+                  </Route>
+                  {/* Handheld mode: scanning, items and locations only, for a mobile computer with a scanner built in. */}
+                  <Route path="handheld" element={<RequireWorkspace handheld />}>
+                    <Route index element={<HandheldHomePage />} />
+                    <Route path="locations" element={<HandheldLocationsPage />} />
+                    <Route path="item/:id" element={<HandheldItemPage />} />
+                    <Route path="location/:id" element={<HandheldLocationPage />} />
                   </Route>
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
