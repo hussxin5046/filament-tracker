@@ -113,6 +113,20 @@ If the list stays empty when you pull the trigger, the scanner is not sending an
 
 Devices on Android 8 can no longer update Chrome. Wrkbench runs on the last version they got, but that browser gets no more security fixes: use such a device on a network you trust.
 
+### Handheld mode
+
+On a mobile computer, the full Wrkbench has more on screen than a scanner needs. **Handheld mode** keeps only what you do with one in your hand: scan, see an item, use or count stock, move it, and put things away in a location. It has no camera, so the built-in scanner always fires.
+
+To switch a device to it, open **More** and choose **Handheld mode (for a scanner)**. The device remembers: from then on, Wrkbench and its home-screen icon open in handheld mode. **Full Wrkbench** at the top goes back to everything, and the device then opens the full Wrkbench again.
+
+In handheld mode:
+
+- **Scan any label**, or a maker's barcode or a location's code, on any screen and it opens. If several spools share a barcode, they are listed and you pick the one in your hand. **Find** also searches by name or code.
+- **An item** shows how much is left, with buttons to use some (admins can also add) and a box to set the exact amount. **Move to another location**, then scan the location's label, or pick it from the list.
+- **A location** lists what is inside it. **Put items away here**, then scan each item: it is moved there at once. Tap **Done** when you have finished.
+
+What each role can do is the same as in the full Wrkbench: operators can use stock and move items, viewers can only look.
+
 ## After a backup is restored
 
 Labels keep working after a workspace is exported and imported into an empty Wrkbench at the same address: items and locations get the same ids back. Importing into a Wrkbench that still holds the originals makes copies with new ids, so the old labels keep pointing at the originals. See [Backups, import and export](Backups-and-data.md).
