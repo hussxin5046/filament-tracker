@@ -27,9 +27,11 @@ interface Scanner {
   /** What a barcode scanner's read does when no dialog has asked for scans itself. */
   openRaw: Handler;
   register: (handler: Handler) => () => void;
+  /** Hand over a scan read some other way: it goes where a barcode scanner's read would (see handheld mode). */
+  dispatch: Handler;
 }
 
-const ScannerContext = createContext<Scanner>({ open: () => 'unknown', openRaw: () => undefined, register: () => () => undefined });
+const ScannerContext = createContext<Scanner>({ open: () => 'unknown', openRaw: () => undefined, register: () => () => undefined, dispatch: () => undefined });
 
 export const useScanner = () => useContext(ScannerContext);
 
@@ -183,7 +185,12 @@ export function ScannerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const scanner = useMemo<Scanner>(
-    () => ({ open: (scan) => latest.current.open(scan), openRaw: (raw) => latest.current.openRaw(raw), register }),
+    () => ({
+      open: (scan) => latest.current.open(scan),
+      openRaw: (raw) => latest.current.openRaw(raw),
+      register,
+      dispatch: (raw) => (handlers.current.at(-1) ?? latest.current.byDefault)(raw),
+    }),
     [register],
   );
 
