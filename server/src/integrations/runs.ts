@@ -264,7 +264,7 @@ export async function reconcileRun(target: RunTarget, reading: PrinterReading, d
   if (!busy(reading) || !name) return Boolean(run);
   // Laser and cutting work uses sheet, not filament: there is nothing in its file to charge, so it is not fetched.
   const laser = reading.print?.kind === 'laser';
-  const jobId = await jobFor(target, name, now, laser ? `Laser or cutting job${reading.tool ? `, ${reading.tool}` : ''}. Add the sheet it used with Edit to take it from stock.` : '');
+  const jobId = await jobFor(target, name, now, laser ? `Laser or cutting job${reading.tool ? `, ${reading.tool}` : ''}. Use Add material used to take the sheet it cut from stock.` : '');
   const jobFile = laser ? null : await readJobFile(target, doc, name, read);
   const file = jobFile?.usage ?? null;
   await prisma.printerRun.create({

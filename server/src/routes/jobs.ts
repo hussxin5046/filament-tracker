@@ -2,7 +2,7 @@ import type { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '@/db';
 import { HttpError, notFound, param, parse } from '@/http';
-import { cancelJob, endOfQueue, finishJob, isOpen, jobInclude, presentJob, startJob } from '@/services/jobs';
+import { addUsageToFinishedJob, cancelJob, endOfQueue, finishJob, isOpen, jobInclude, presentJob, startJob } from '@/services/jobs';
 import { assertInWorkspace } from '@/services/stock';
 
 const usageInput = z.object({
@@ -94,6 +94,12 @@ export function registerJobRoutes(router: Router): void {
   router.post('/jobs/:id/finish', async (req, res) => {
     const { outcome = 'completed' } = parse(finishInput, req.body ?? {});
     res.json(presentJob(await finishJob(req.workspaceId, param(req, 'id'), { outcome, userId: req.userId })));
+  });
+
+  /** Material a finished job used that was not recorded. Takes it from stock now and adds its cost to the job. */
+  router.post('/jobs/:id/usages', async (req, res) => {
+    const { itemId, quantity = 0, hours = 0 } = parse(usageInput, req.body);
+    res.status(201).json(presentJob(await addUsageToFinishedJob(req.workspaceId, param(req, 'id'), { itemId, quantity, hours }, req.userId)));
   });
 
   router.post('/jobs/:id/cancel', async (req, res) => {

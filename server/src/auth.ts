@@ -26,6 +26,7 @@ const OPERATOR_WRITES: Array<[method: string, path: RegExp]> = [
   ['POST', /^\/jobs$/],
   ['PATCH', /^\/jobs\/[^/]+$/],
   ['POST', /^\/jobs\/[^/]+\/(start|finish|cancel)$/],
+  ['POST', /^\/jobs\/[^/]+\/usages$/], // material a finished job used that was not recorded
   ['PUT', /^\/jobs\/[^/]+\/project$/], // which project a job belongs to
   ['POST', /^\/projects$/],
   ['PATCH', /^\/projects\/[^/]+$/], // name, customer and notes; price and stage are PUT .../pricing, admins only

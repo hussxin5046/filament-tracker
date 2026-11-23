@@ -52,6 +52,10 @@ A failed run still uses its materials, so they are taken from stock too. Edit th
 
 Machine time is the run time multiplied by the machine's running cost per hour.
 
+### Add material to a finished job
+
+A finished job cannot be edited, but you can still record material it used that nobody entered. This is how you take the sheet a laser job cut, since the printer cannot tell which sheet was on the bed. Open the job in **History**, choose **Add material used**, pick the item and enter how much was used. Wrkbench takes it from stock straight away and adds its cost to the job and to its project.
+
 ## The queue
 
 Each machine's open jobs are listed in the order they will run:

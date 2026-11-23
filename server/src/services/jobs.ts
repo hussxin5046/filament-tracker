@@ -132,6 +132,43 @@ export async function finishJob(workspaceId: string, jobId: string, { outcome = 
   return job;
 }
 
+/**
+ * Record material used by a job that has already finished (a print started at the printer, a laser job whose sheet
+ * the printer cannot see). Takes the stock now, through moveStock, and adds the cost to the job's snapshot.
+ */
+export async function addUsageToFinishedJob(workspaceId: string, jobId: string, input: { itemId: string; quantity: number; hours: number }, userId: string | null): Promise<JobRow> {
+  return prisma.$transaction(
+    async (tx) => {
+      const job = await tx.job.findFirst({ where: { id: jobId, workspaceId }, include: jobInclude });
+      if (!job) throw notFound('Job');
+      if (job.status !== 'completed' && job.status !== 'failed') throw new HttpError(409, 'Only finished jobs can have material added this way. Use Edit on an open job.');
+      const item = await tx.item.findFirst({ where: { id: input.itemId, workspaceId } });
+      if (!item) throw new HttpError(404, 'Item not found');
+      if (input.quantity <= 0 && input.hours <= 0) throw new HttpError(400, 'Say how much was used');
+
+      const { material, tooling } = lineCost({ quantity: input.quantity, hours: input.hours, item });
+      const cost = round(material + tooling, 2);
+      const existing = job.usages.find((u) => u.itemId === input.itemId);
+      if (existing) {
+        await tx.jobUsage.update({ where: { id: existing.id }, data: { quantity: { increment: input.quantity }, hours: { increment: input.hours }, cost: { increment: cost } } });
+      } else {
+        await tx.jobUsage.create({ data: { jobId, itemId: input.itemId, quantity: input.quantity, hours: input.hours, cost } });
+      }
+      if (input.quantity > 0) await moveStock(tx, { workspaceId, itemId: input.itemId, delta: -input.quantity, reason: 'job', note: job.name, jobId, userId });
+      if (input.hours > 0) {
+        const worn = await tx.item.update({ where: { id: input.itemId }, data: { usageHours: { increment: input.hours } } });
+        if (worn.lifeHours && worn.usageHours >= worn.lifeHours && !worn.wearFlag) await tx.item.update({ where: { id: worn.id }, data: { wearFlag: true } });
+      }
+      await tx.job.update({
+        where: { id: jobId },
+        data: { materialCost: round(job.materialCost + material, 2), toolingCost: round(job.toolingCost + tooling, 2), totalCost: round(job.totalCost + material + tooling, 2) },
+      });
+      return tx.job.findUniqueOrThrow({ where: { id: jobId }, include: jobInclude });
+    },
+    { timeout: 30_000 },
+  );
+}
+
 export async function cancelJob(workspaceId: string, jobId: string): Promise<JobRow> {
   const existing = await prisma.job.findFirst({ where: { id: jobId, workspaceId } });
   if (!existing) throw notFound('Job');
