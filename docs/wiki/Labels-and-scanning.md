@@ -93,7 +93,7 @@ Wrkbench tells a scanner from a keyboard by its speed: the code arrives all at o
 
 There is no app to install from a file. Open Wrkbench in Chrome on the device, then choose **Add to Home screen** from Chrome's menu: it gets its own icon and opens full screen. This needs Wrkbench at a secure address (one starting `https://`); at any other address it still works as a page in Chrome.
 
-Use **Handheld mode** on the device (see below). In Chrome, a Zebra mobile computer hands each scan to the text box that has the cursor, and drops it when no box has one. Handheld mode has a **Ready to scan** bar for this, which never brings up the on-screen keyboard. In the full Wrkbench, scans only arrive while you are typing in a box, such as **Or type a code** in the Scan window.
+Use **Handheld mode** on the device (see below). In Chrome, a Zebra mobile computer hands each scan to the text box that has the cursor, and drops it when no box has one. Handheld mode has a **Ready to scan** bar with a box for this. Tapping the box brings up the on-screen keyboard: a TC56 only hands scans to a box that does. In the full Wrkbench, scans only arrive while you are typing in a box, such as **Or type a code** in the Scan window.
 
 The built-in scanner does not fire while Chrome has the camera open. Open **Scan** once and tap **Turn off camera (for a device with a scanner built in)**: the device remembers it, and the trigger then works in the Scan window too. **Use camera** turns it back on.
 
@@ -128,6 +128,9 @@ In handheld mode:
 - **Scan any label**, or a maker's barcode or a location's code, on any screen and it opens. If several spools share a barcode, they are listed and you pick the one in your hand. **Find** also searches by name or code.
 - **An item** shows how much is left, with buttons to use some (admins can also add) and a box to set the exact amount. **Move to another location**, then scan the location's label, or pick it from the list.
 - **A location** lists what is inside it. **Put items away here**, then scan each item: it is moved there at once. Tap **Done** when you have finished.
+
+- **NFC tags**: tap the **NFC** button at the top (on a device that can read NFC, with Wrkbench at an `https://` address), then hold a spool's sticker to the back of the device: the spool opens. An OpenSpool tag that Wrkbench did not write opens the full inventory with the spools it could be. Tap the button again to stop. See [Spool tags](Spool-tags.md).
+- **Writing a sticker**: on a spool, **Spool tag** writes its NFC sticker, as in the full Wrkbench.
 
 What each role can do is the same as in the full Wrkbench: operators can use stock and move items, viewers can only look.
 

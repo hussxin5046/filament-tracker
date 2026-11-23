@@ -1,9 +1,10 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowRightLeft, ChevronRight, CircleAlert, CircleCheck, MapPin, Minus, PackageOpen, PackageSearch, Plus, ScanLine, X } from 'lucide-react';
+import { ArrowRightLeft, ChevronRight, CircleAlert, CircleCheck, MapPin, Minus, Nfc, PackageOpen, PackageSearch, Plus, ScanLine, X } from 'lucide-react';
 import { stepsFor } from '@/components/items/ItemSheet';
 import { StockMeter } from '@/components/items/StockMeter';
 import { useScanHandler } from '@/components/scan/ScannerProvider';
+import { TagDialog } from '@/components/tags/TagDialog';
 import { Button } from '@/components/ui/Button';
 import { Badge, EmptyState, List, Loading, Muted, Row, SectionTitle } from '@/components/ui/Display';
 import { NumberField, SelectField, TextField } from '@/components/ui/Form';
@@ -14,6 +15,7 @@ import { useStockChange } from '@/hooks/useUndo';
 import { api } from '@/lib/api';
 import { formatNumber, formatQuantity, isLow, locationPath, parseNumber } from '@/lib/format';
 import { handheldItemPath, handheldLocationPath, readHandheldScan } from '@/lib/handheld';
+import { spoolFacts } from '@/lib/spoolMatch';
 import { refreshAll } from '@/lib/store';
 import type { Item, Location } from '@/lib/types';
 import itemStyles from '@/components/items/Items.module.css';
@@ -146,8 +148,10 @@ export function HandheldItemPage() {
   const toast = useToast();
   const stock = useStockChange();
   const { items, loading } = useItems();
-  const { locations, unitById, typeById } = useCatalog();
+  const catalog = useCatalog();
+  const { locations, unitById, typeById } = catalog;
   const [exact, setExact] = useState('');
+  const [tagging, setTagging] = useState(false);
   const [moving, setMoving] = useState(false);
   const [target, setTarget] = useState('');
   const [busy, setBusy] = useState(false);
@@ -315,6 +319,13 @@ export function HandheldItemPage() {
             Move to another location
           </Button>
         ))}
+
+      {canOperate && spoolFacts(item, catalog).material && (
+        <Button block size="lg" icon={Nfc} onClick={() => setTagging(true)}>
+          Spool tag
+        </Button>
+      )}
+      {tagging && <TagDialog item={item} items={items} catalog={catalog} onClose={() => setTagging(false)} />}
 
       <Link to={`/inventory?item=${encodeURIComponent(item.id)}`} className={styles.fullLink}>
         Open in the full Wrkbench
