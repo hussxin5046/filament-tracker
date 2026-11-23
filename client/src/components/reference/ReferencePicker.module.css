@@ -3,13 +3,36 @@
   margin-block: var(--space-1);
 }
 
+/* The browse view has a fixed height: tabs, filters and search stay put and only the results scroll. */
+.browse {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: min(60vh, 34rem);
+  height: min(60dvh, 34rem);
+  min-height: 0;
+}
+
+.browse > * {
+  flex-shrink: 0;
+}
+
 .results {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  max-height: min(50vh, 28rem);
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+/* The list clips itself, so without this it shrinks to fit instead of letting the box scroll. */
+.results > * {
+  flex-shrink: 0;
+}
+
+.browse > .results {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .swatchStack {

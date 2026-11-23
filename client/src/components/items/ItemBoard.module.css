@@ -22,8 +22,9 @@
   flex-direction: column;
   flex: 0 0 min(84vw, 20rem);
   min-width: 0;
-  max-height: calc(100vh - var(--tabbar-height) - 6rem - env(safe-area-inset-bottom)); /* Chrome before 108 has no dvh */
-  max-height: calc(100dvh - var(--tabbar-height) - 6rem - env(safe-area-inset-bottom));
+  /* --board-top is where the board starts on the page (set by the board). Never shorter than 20rem. */
+  max-height: max(20rem, calc(100vh - var(--board-top, 6rem) - var(--tabbar-height) - 2rem - env(safe-area-inset-bottom))); /* Chrome before 108 has no dvh */
+  max-height: max(20rem, calc(100dvh - var(--board-top, 6rem) - var(--tabbar-height) - 2rem - env(safe-area-inset-bottom)));
   border: var(--border);
   border-radius: var(--radius-lg);
   background: var(--color-surface-sunken);
@@ -189,7 +190,32 @@
   .column {
     flex: 1 0 16.5rem;
     max-width: 24rem;
-    max-height: calc(100vh - 5rem); /* Chrome before 108 has no dvh */
-    max-height: calc(100dvh - 5rem);
+    max-height: max(20rem, calc(100vh - var(--board-top, 5rem) - 3.5rem)); /* Chrome before 108 has no dvh */
+    max-height: max(20rem, calc(100dvh - var(--board-top, 5rem) - 3.5rem));
   }
+}
+
+/* ---- Sideways scroll buttons ------------------------------------------ */
+.frame {
+  position: relative;
+  min-width: 0;
+}
+
+.nudge {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  margin-top: -1.1rem;
+  border: var(--border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md, 0 2px 8px rgb(0 0 0 / 0.18));
+}
+
+.nudgeLeft {
+  left: var(--space-2);
+}
+
+.nudgeRight {
+  right: var(--space-2);
 }

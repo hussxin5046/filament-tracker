@@ -37,6 +37,8 @@ Switch between views at the top of the screen. Wrkbench remembers your choice on
 - **By location**: one column per storage place, plus one for each AMS with spools loaded in it. A loaded spool sits in its AMS column, not on the shelf it came from. Locations also have their own page: see [Locations](Locations.md).
 - **List**: everything in one table.
 
+When there are more columns than fit on screen, round arrow buttons appear at the left and right of the board. Each press moves along by one column, and an arrow disappears once you reach that end. You can still scroll with the mouse, trackpad or a swipe. Each column scrolls on its own, and its heading stays in view.
+
 Use the search box to find items by name, material, size or location. The **Category** and **Status** chips (low stock, worn, offcuts, loaded in a machine) narrow the list, and **Filters** adds **Location** (any location, or an AMS under **In machines**), **Supplier** and **Sort by**: by name, lowest quantity first, or most recently changed.
 
 While any spool is **on the move**, the status filters gain **On the move**. A spool is on the move after it was taken out, at a [location display](Location-displays.md#on-the-move) or with **Take out** on the spool, and before it is put away or loaded into a machine.

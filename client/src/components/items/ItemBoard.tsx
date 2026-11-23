@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Plus } from 'lucide-react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { IconButton } from '@/components/ui/Button';
 import { StockMeter } from '@/components/items/StockMeter';
 import { Badge, Figure, Swatch, TypeIcon } from '@/components/ui/Display';
@@ -129,40 +129,88 @@ export function ItemBoard({ items, catalog, grouping, hideEmpty, canEdit, focusM
     [grouping, items, catalog, hideEmpty, focusMachineId],
   );
 
-  return (
-    <div className={styles.board} role="list" aria-label={`Inventory by ${grouping}`}>
-      {columns.map((column) => (
-        <section key={column.id} className={styles.column} role="listitem" aria-label={column.title}>
-          <header className={styles.columnHead}>
-            <TypeIcon icon={column.icon} tone={column.tone} size="sm" />
-            <div className={styles.columnHeading}>
-              <h2 className={styles.columnTitle}>{column.title}</h2>
-              {column.hint && <span className={styles.columnHint}>{column.hint}</span>}
-            </div>
-            <span className={styles.columnCount}>{column.count}</span>
-            {canEdit && column.preset && (
-              <IconButton icon={Plus} size="sm" label={`Add item to ${column.title}`} onClick={() => onAdd(column.preset ?? {})} />
-            )}
-          </header>
+  const boardRef = useRef<HTMLDivElement>(null);
+  // Columns are as tall as the space left below the board's start, so the whole column and the sideways
+  // scrollbar are on screen at once and the page itself has nothing left to scroll.
+  useLayoutEffect(() => {
+    const board = boardRef.current;
+    if (!board) return;
+    const measure = () => board.style.setProperty('--board-top', `${Math.round(board.getBoundingClientRect().top + window.scrollY)}px`);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(document.body);
+    window.addEventListener('resize', measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, []);
 
-          <div className={styles.columnBody}>
-            {column.count === 0 && <p className={styles.columnEmpty}>Nothing here yet</p>}
-            {column.sections.map((section) => (
-              <div key={section.id} className={styles.section}>
-                {section.label && (
-                  <h3 className={styles.sectionLabel}>
-                    {section.label}
-                    <span className={styles.sectionCount}>{section.items.length}</span>
-                  </h3>
-                )}
-                {section.items.map((item) => (
-                  <BoardCard key={item.id} item={item} catalog={catalog} onOpen={onOpen} />
-                ))}
+  // Sideways scroll buttons, shown only while there is more to see in that direction.
+  const [reach, setReach] = useState({ left: false, right: false });
+  const updateReach = useCallback(() => {
+    const board = boardRef.current;
+    if (!board) return;
+    const left = board.scrollLeft > 4;
+    const right = board.scrollLeft + board.clientWidth < board.scrollWidth - 4;
+    setReach((current) => (current.left === left && current.right === right ? current : { left, right }));
+  }, []);
+  useLayoutEffect(() => {
+    updateReach();
+    const board = boardRef.current;
+    if (!board) return;
+    const observer = new ResizeObserver(updateReach);
+    observer.observe(board);
+    for (const child of board.children) observer.observe(child);
+    return () => observer.disconnect();
+  }, [columns, updateReach]);
+
+  const nudge = (direction: -1 | 1) => {
+    const board = boardRef.current;
+    const column = board?.firstElementChild;
+    if (!board || !column) return;
+    const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+    board.scrollBy({ left: direction * (column.getBoundingClientRect().width + 12), behavior });
+  };
+
+  return (
+    <div className={styles.frame}>
+      {reach.left && <IconButton icon={ChevronLeft} label="Scroll left" className={`${styles.nudge} ${styles.nudgeLeft}`} onClick={() => nudge(-1)} />}
+      {reach.right && <IconButton icon={ChevronRight} label="Scroll right" className={`${styles.nudge} ${styles.nudgeRight}`} onClick={() => nudge(1)} />}
+      <div ref={boardRef} className={styles.board} role="list" aria-label={`Inventory by ${grouping}`} onScroll={updateReach}>
+        {columns.map((column) => (
+          <section key={column.id} className={styles.column} role="listitem" aria-label={column.title}>
+            <header className={styles.columnHead}>
+              <TypeIcon icon={column.icon} tone={column.tone} size="sm" />
+              <div className={styles.columnHeading}>
+                <h2 className={styles.columnTitle}>{column.title}</h2>
+                {column.hint && <span className={styles.columnHint}>{column.hint}</span>}
               </div>
-            ))}
-          </div>
-        </section>
-      ))}
+              <span className={styles.columnCount}>{column.count}</span>
+              {canEdit && column.preset && (
+                <IconButton icon={Plus} size="sm" label={`Add item to ${column.title}`} onClick={() => onAdd(column.preset ?? {})} />
+              )}
+            </header>
+  
+            <div className={styles.columnBody}>
+              {column.count === 0 && <p className={styles.columnEmpty}>Nothing here yet</p>}
+              {column.sections.map((section) => (
+                <div key={section.id} className={styles.section}>
+                  {section.label && (
+                    <h3 className={styles.sectionLabel}>
+                      {section.label}
+                      <span className={styles.sectionCount}>{section.items.length}</span>
+                    </h3>
+                  )}
+                  {section.items.map((item) => (
+                    <BoardCard key={item.id} item={item} catalog={catalog} onOpen={onOpen} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
     </div>
   );
 }
