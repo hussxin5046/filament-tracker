@@ -4,7 +4,7 @@ import { Fingerprint } from 'lucide-react';
 import { LegalNote } from '@/pages/LegalPages';
 import { Button } from '@/components/ui/Button';
 import { ErrorNote } from '@/components/ui/Display';
-import { TextField } from '@/components/ui/Form';
+import { Checkbox, TextField } from '@/components/ui/Form';
 import { NewPasswordField } from '@/components/ui/NewPasswordField';
 import { useAuth } from '@/context/AuthContext';
 import { ApiError } from '@/lib/api';
@@ -19,6 +19,7 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [refused, setRefused] = useState<string | null>(null);
   // Set once the password was right on an account with two-step sign-in: the form then asks for a code.
   const [challenge, setChallenge] = useState<string | null>(null);
@@ -51,6 +52,10 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
     event.preventDefault();
     if (challenge) void run(() => completeTwoStep(challenge, code));
     else if (registering) {
+      if (!ageConfirmed) {
+        setError('Confirm that you are old enough to use Wrkbench.');
+        return;
+      }
       // What the browser can already tell is said at once, in the server's words. The server still checks.
       const weak = weakness(password, { email, name });
       if (weak) setError(REFUSALS[weak]);
@@ -190,8 +195,16 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
             </p>
           )}
           {error && <ErrorNote>{error}</ErrorNote>}
+          {registering && (
+            <Checkbox
+              label="I confirm I am old enough to use Wrkbench"
+              hint="At least 13, or 16 where local law requires."
+              checked={ageConfirmed}
+              onChange={setAgeConfirmed}
+            />
+          )}
           {registering && <LegalNote action="creating an account" />}
-          <Button type="submit" variant="primary" size="lg" block disabled={busy}>
+          <Button type="submit" variant="primary" size="lg" block disabled={busy || (registering && !ageConfirmed)}>
             {registering ? 'Create account' : 'Sign in'}
           </Button>
           {!registering && passkeysSupported() && (
