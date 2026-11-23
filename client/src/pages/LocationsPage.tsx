@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ChevronRight, FolderInput, MapPin, MapPinOff, Pencil, Plus, QrCode, ScanLine, Trash2 } from 'lucide-react';
+import { ChevronRight, FolderInput, MapPin, MapPinOff, Pencil, Plus, Printer, QrCode, ScanLine, Trash2 } from 'lucide-react';
 import { ItemPicker } from '@/components/items/ItemPicker';
 import { LabelPrintDialog } from '@/components/labels/LabelPrintDialog';
 import { ScanDialog, type ScanNote } from '@/components/scan/ScanDialog';
@@ -9,14 +9,14 @@ import { EmptyState, ErrorNote, Figure, List, Muted, PageHeader, PageSkeleton, R
 import { FormGrid, SelectField, TextField } from '@/components/ui/Form';
 import { Modal, useConfirm } from '@/components/ui/Modal';
 import { useAction } from '@/components/ui/Toast';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import { useWorkspace, useWsQuery } from '@/context/WorkspaceContext';
 import { useCatalog, useItems } from '@/hooks/useCatalog';
 import { api } from '@/lib/api';
-import { flattenLocations, formatQuantity, locationPath, locationScope, summarizeFields } from '@/lib/format';
+import { UNIT_PLACE, flattenLocations, formatQuantity, isPutAway, locationPath, locationScope, summarizeFields } from '@/lib/format';
 import { locationLabel, type Label } from '@/lib/labels';
 import { refreshAll } from '@/lib/store';
 import type { Scan } from '@/lib/scan';
-import type { Item, Location } from '@/lib/types';
+import type { Item, Location, SubUnit } from '@/lib/types';
 import styles from '@/pages/LocationsPage.module.css';
 
 /** How many items a list shows before pointing at the inventory for the rest. */
@@ -96,6 +96,7 @@ export function LocationsPage() {
   const { canEdit, canOperate, wsPath } = useWorkspace();
   const catalog = useCatalog();
   const { items, loading, error } = useItems();
+  const subUnits = useWsQuery<SubUnit[]>('/sub-units');
   const { run, busy } = useAction();
   const confirm = useConfirm();
   const [form, setForm] = useState<{ location?: Location } | null>(null);
@@ -176,7 +177,11 @@ export function LocationsPage() {
 
   // ---- Every location, as a tree ----
   if (!current) {
-    const homeless = items.filter((item) => !item.locationId);
+    // A spool loaded in an AMS (or any machine unit) is put away: the unit is where it is kept.
+    const homeless = items.filter((item) => !isPutAway(item));
+    const units = (subUnits.data ?? [])
+      .filter((unit) => unit.slots.length > 0)
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
     return (
       <>
         <PageHeader
@@ -220,10 +225,32 @@ export function LocationsPage() {
                 ))}
               </List>
             </div>
+            {units.length > 0 && (
+              <div className={styles.section}>
+                <SectionTitle count={units.length}>In machines</SectionTitle>
+                <Muted>Spools loaded in an AMS count as put away. Open one to see what is in it.</Muted>
+                <List>
+                  {units.map((unit) => {
+                    const loaded = unit.slots.filter((slot) => slot.itemId).length;
+                    const machine = unit.machineId ? catalog.machineById.get(unit.machineId)?.name : '';
+                    return (
+                      <Row
+                        key={unit.id}
+                        to={`/inventory?location=${encodeURIComponent(`${UNIT_PLACE}${unit.id}`)}`}
+                        leading={<Printer size={18} aria-hidden />}
+                        title={unit.name}
+                        subtitle={[machine, `${loaded} of ${plural(unit.slots.length, 'slot')} loaded`].filter(Boolean).join(' · ')}
+                        trailing={<ChevronRight size={18} aria-hidden />}
+                      />
+                    );
+                  })}
+                </List>
+              </div>
+            )}
             {homeless.length > 0 && (
               <div className={styles.section}>
                 <SectionTitle count={homeless.length}>Not put away</SectionTitle>
-                <Muted>These have no location. Open a location and choose "Move items here" to put them away.</Muted>
+                <Muted>These have no location and are not loaded in a machine. Open a location and choose "Move items here" to put them away.</Muted>
                 <List>{homeless.slice(0, SHOWN).map(itemRow)}</List>
                 {homeless.length > SHOWN && <Muted>And {homeless.length - SHOWN} more.</Muted>}
               </div>
@@ -376,7 +403,7 @@ export function LocationsPage() {
           catalog={catalog}
           onPick={() => undefined}
           onClose={() => setMoving(false)}
-          note={(item) => (item.locationId ? `Now in ${locationPath(item.locationId, locations)}` : 'Not put away')}
+          note={(item) => (item.locationId ? `Now in ${locationPath(item.locationId, locations)}` : item.slot ? `Loaded in ${item.slot.subUnit.name}` : 'Not put away')}
           multi={{ confirmLabel: (count) => (count ? `Move ${plural(count, 'item')} here` : 'Move here'), onConfirm: moveHere, busy }}
         />
       )}

@@ -8,6 +8,8 @@
 
 **Locations** in the main menu shows every location as a tree, with how many items are in each (counting everything inside it). Items that have no location yet are listed underneath as **Not put away**.
 
+Spools loaded in an AMS (or any other unit on a machine) count as put away, so they are not listed there. Each AMS shows under **In machines** with how many of its slots are loaded. Open one to see the spools in it in the inventory.
+
 Open a location to see:
 
 - **Inside it**: the locations nested in it.

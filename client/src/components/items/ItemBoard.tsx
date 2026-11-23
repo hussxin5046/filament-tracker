@@ -77,15 +77,31 @@ function buildColumns(grouping: BoardGrouping, items: Item[], catalog: Catalog, 
 
   // Location: one column per place things are actually kept, in tree order.
   // A location that only contains other locations (a room, a rack) shows up only if something sits in it directly.
+  // A spool loaded in a machine unit (an AMS) sits in that unit's column, not on the shelf it came from.
   const parents = new Set(catalog.locations.map((location) => location.parentId).filter(Boolean));
+  const shelved = items.filter((item) => !item.slot);
   const columns: Column[] = flattenLocations(catalog.locations).map((location) => {
-    const own = items.filter((item) => item.locationId === location.id);
+    const own = shelved.filter((item) => item.locationId === location.id);
     return {
       id: location.id, title: location.name, hint: locationPath(location.parentId, catalog.locations), icon: 'Warehouse', tone: 'teal',
       count: own.length, sections: byCategory(own, catalog), preset: { locationId: location.id }, fallback: parents.has(location.id),
     };
   });
-  const rest = items.filter((item) => !item.locationId || !catalog.locationById.has(item.locationId));
+  const units = new Map<string, { name: string; machineId: string | null; items: Item[] }>();
+  for (const item of items) {
+    if (!item.slot) continue;
+    const { id, name, machineId } = item.slot.subUnit;
+    const unit = units.get(id) ?? { name, machineId, items: [] };
+    unit.items.push(item);
+    units.set(id, unit);
+  }
+  for (const [id, unit] of [...units].sort(([, a], [, b]) => a.name.localeCompare(b.name, undefined, { numeric: true }))) {
+    columns.push({
+      id: `unit-${id}`, title: unit.name, hint: (unit.machineId && catalog.machineById.get(unit.machineId)?.name) || 'Loaded', icon: 'Printer', tone: 'blue',
+      count: unit.items.length, sections: byCategory(unit.items, catalog), preset: null, fallback: true,
+    });
+  }
+  const rest = shelved.filter((item) => !item.locationId || !catalog.locationById.has(item.locationId));
   columns.push({
     id: 'none', title: 'No location', hint: 'Not put away yet', icon: 'Package', tone: 'slate', count: rest.length,
     sections: byCategory(rest, catalog), preset: null, fallback: true,
