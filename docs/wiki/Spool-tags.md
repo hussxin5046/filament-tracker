@@ -12,6 +12,8 @@ Wrkbench writes stickers in the [OpenSpool](https://github.com/spuder/OpenSpool)
 
 Bambu Lab's own spools already carry a tag the printer reads, so they do not need a sticker. A [location display](Location-displays.md#which-tags-are-read) with a tag reader reads those tags too. Stickers are for everything else.
 
+A phone, or a mobile computer such as a Zebra TC56, cannot read a Bambu Lab spool's own tag: the tag is locked, and only a reader made for it can open it. Holding one to the phone in Wrkbench says so. Scan the spool's [label](Labels-and-scanning.md) instead, or let the printer or a location display read the tag.
+
 ## What goes on the sticker
 
 Two things, both small:

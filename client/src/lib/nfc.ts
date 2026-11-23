@@ -60,6 +60,13 @@ function contentsOf(event: NfcReadingEvent): TagContents {
   return { serial: event.serialNumber || null, url, json };
 }
 
+/**
+ * A Bambu Lab spool's own tag is locked: it opens only with keys worked out from its serial, which a reader made
+ * for it (the printer's AMS, a location display's tag reader) knows and a phone's browser cannot use. To the
+ * phone it is a tag it cannot read, or one with nothing on it, so whichever it says, say this too.
+ */
+export const BAMBU_TAG_NOTE = "A Bambu Lab spool's own tag cannot be read by a phone: scan the spool's label instead, or let the printer or a location display read the tag.";
+
 /** Why NFC could not be used, in words for the person holding the phone. */
 export function nfcProblem(error: unknown): string {
   const name = error instanceof DOMException ? error.name : '';
@@ -86,7 +93,7 @@ export async function listenForTags(onTag: (contents: TagContents) => void, onEr
   const reader = new NDEFReader();
   const abort = new AbortController();
   reader.addEventListener('reading', (event) => onTag(contentsOf(event as NfcReadingEvent)), { signal: abort.signal });
-  reader.addEventListener('readingerror', () => onError(nfcProblem(null)), { signal: abort.signal });
+  reader.addEventListener('readingerror', () => onError(`${nfcProblem(null)} ${BAMBU_TAG_NOTE}`), { signal: abort.signal });
   await reader.scan({ signal: abort.signal });
   return {
     write: (url, json) => {
