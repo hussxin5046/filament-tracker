@@ -12,6 +12,8 @@ Wrkbench writes stickers in the [OpenSpool](https://github.com/spuder/OpenSpool)
 
 Bambu Lab's own spools already carry a tag the printer reads, so they do not need a sticker. A [location display](Location-displays.md#which-tags-are-read) with a tag reader reads those tags too. Stickers are for everything else.
 
+A phone, or a mobile computer such as a Zebra TC56, cannot read a Bambu Lab spool's own tag: the tag is locked, and only a reader made for it can open it. Holding one to the phone in Wrkbench says so. Scan the spool's [label](Labels-and-scanning.md) instead, or let the printer or a location display read the tag.
+
 ## What goes on the sticker
 
 Two things, both small:
@@ -83,7 +85,8 @@ Only printers that are reporting right now are offered.
 
 ## Good to know
 
-- **Not yet checked on real hardware.** Writing and reading tags was built to the Web NFC and OpenSpool specifications and tested with a stand-in for the phone's NFC reader, and scan-then-insert with the bridge's simulated printers. Still to be confirmed with a real phone, sticker and printer: writing and re-reading an NTAG215, that tapping a sticker opens the link on both Android and iPhone, and how a real AMS reports a tray between a spool going in and its filament being set on the printer. A tray whose filament has not been set reads as empty, so scan-then-insert may only link once the printer has been told what is in it.
+- **Checked on a Zebra TC56** (Android 8.1, Chrome 101) in Wrkbench's handheld mode: writing a spool's sticker, reading it back to open the spool, and reading an OpenSpool tag.
+- **Not yet checked on real hardware:** that tapping a sticker with the app closed opens the link on Android and iPhone, and scan-then-insert with a real printer, which was tested with the bridge's simulated printers. Still to be confirmed: how a real AMS reports a tray between a spool going in and its filament being set on the printer. A tray whose filament has not been set reads as empty, so scan-then-insert may only link once the printer has been told what is in it.
 - **Record order.** OpenSpool readers that look only at the first record on a tag would want the OpenSpool record first; Wrkbench puts the link first so tapping works. If you use such a reader, say so: it is a one-line change.
 - **A sticker does not change how the printer sees a spool.** The AMS cannot read these stickers. In Wrkbench a stickered spool behaves like any untagged spool in a tray: it stays linked while the printer's description of the tray still fits it.
 - Sticker serials are kept as `NFC` followed by the serial, in the same place as tags read by the printer. They come along in [exports](Backups-and-data.md).

@@ -2,6 +2,7 @@
   position: relative;
   overflow: hidden;
   aspect-ratio: 4 / 3;
+  max-height: 46vh; /* Chrome before 108 has no dvh */
   max-height: 46dvh;
   border-radius: var(--radius-lg);
   background: #000;
@@ -71,4 +72,32 @@
   gap: var(--space-2);
   font-size: var(--text-sm);
   font-weight: var(--weight-bold);
+}
+
+/* The scanner test's report: every event on its own line, to read and copy. */
+.report {
+  width: 100%;
+  min-height: 12rem;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-sunken, var(--color-surface));
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs, var(--text-sm));
+  white-space: pre;
+  overflow: auto;
+  resize: vertical;
+}
+
+.testLink {
+  align-self: flex-start;
+}
+
+.cameraOff {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
 }

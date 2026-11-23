@@ -93,17 +93,64 @@ Wrkbench tells a scanner from a keyboard by its speed: the code arrives all at o
 
 There is no app to install from a file. Open Wrkbench in Chrome on the device, then choose **Add to Home screen** from Chrome's menu: it gets its own icon and opens full screen. This needs Wrkbench at a secure address (one starting `https://`); at any other address it still works as a page in Chrome.
 
+Use **Handheld mode** on the device (see below). In Chrome, a Zebra mobile computer hands each scan to the text box that has the cursor, and drops it when no box has one. Handheld mode has a **Ready to scan** bar with a box for this. Tapping the box brings up the on-screen keyboard: a TC56 only hands scans to a box that does. After the first scan the keyboard is put away while the box stays ready; tap the box to bring it back for typing a code. In the full Wrkbench, scans only arrive while you are typing in a box, such as **Or type a code** in the Scan window.
+
+The built-in scanner does not fire while Chrome has the camera open. Open **Scan** once and tap **Turn off camera (for a device with a scanner built in)**: the device remembers it, and the trigger then works in the Scan window too. **Use camera** turns it back on.
+
 Then set up DataWedge, the scanning service already on the device:
 
 1. Open **DataWedge** and choose **Profile0 (default)**, which applies to every app without a profile of its own.
 2. Check that **Barcode input** and **Keystroke output** are both on.
-3. Under **Keystroke output**, open **Basic data formatting** and turn on **Send ENTER key**.
+3. Under **Keystroke output**, open **Basic data formatting** and check that **Send data** and **Send ENTER key** are both on.
+4. Leave **Intent output** and **IP output** off.
+
+These are the settings Wrkbench was tested with on a TC56 (Android 8.1, Chrome 101). Nothing else in DataWedge needed changing.
+
+#### Or import the tested profile
+
+Instead of the steps above, you can import the profile that was used for testing. It sets the same things, for Chrome only, so other apps on the device keep scanning as before.
+
+1. On the device, open [the Wrkbench DataWedge profile](https://github.com/hussxin5046/filament-tracker/raw/main/docs/zebra/dwprofile_wrkbench.db) in Chrome to download it. Keep its file name, **dwprofile_wrkbench.db**: DataWedge only imports files named this way.
+2. Open **DataWedge**, then its menu (**⋮**) → **Settings** → **Import Profile**, and choose the downloaded file. The exact names vary between DataWedge versions.
+3. Check that a profile called **wrkbench** is now listed, with **Chrome** under **Associated apps**.
+
+### If scans do nothing
+
+In handheld mode, check the bar at the top first: it must be green (**Ready to scan**). If it says **Tap the box, then scan**, tap the box and scan again.
+
+Open **Scan** and tap **Barcode scanner not working? Test it**. The **Scanner test** lists everything the scanner sends, the pause before each character, and whether Wrkbench read it as a scan. Nothing opens while it is open, and the camera is off so the scanner can fire.
+
+1. Scan a label.
+2. Tap **Scan into this box** and scan the same label again.
+3. Tap **Copy** and send the result to whoever helps you set up the scanner, or with a bug report.
+
+If the list stays empty when you pull the trigger, the scanner is not sending anything to the browser: check its settings (for a Zebra mobile computer, the DataWedge steps above).
 
 Devices on Android 8 can no longer update Chrome. Wrkbench runs on the last version they got, but that browser gets no more security fixes: use such a device on a network you trust.
 
+### Handheld mode
+
+On a mobile computer, the full Wrkbench has more on screen than a scanner needs. **Handheld mode** keeps only what you do with one in your hand: scan, see an item, use or count stock, move it, and put things away in a location. It has no camera, so the built-in scanner always fires.
+
+To switch a device to it, open **More** and choose **Handheld mode (for a scanner)**. The device remembers: from then on, Wrkbench and its home-screen icon open in handheld mode. **Full Wrkbench** at the top goes back to everything, and the device then opens the full Wrkbench again.
+
+In handheld mode:
+
+- **The bar at the top shows whether a scan will land.** Green **Ready to scan** means it will. When handheld mode opens it says **Tap the box, then scan**: tap the box in the bar once. Chrome only lets a scan into a box you have tapped yourself. It also says this after you have typed an amount; tapping a button usually makes it ready again by itself.
+
+- **Scan any label**, or a maker's barcode or a location's code, on any screen and it opens. If several spools share a barcode, they are listed and you pick the one in your hand. **Find** also searches by name or code.
+- **An item** shows how much is left, with buttons to use some (admins can also add) and a box to set the exact amount. **Move to another location**, then scan the location's label, or pick it from the list.
+- **A spool to fetch**: **Find** lights it up on its location display, **Take out** marks it on the move, and **Load into…** puts it in a printer. See [Fetch a spool with a scanner](#fetch-a-spool-with-a-scanner).
+- **A location** lists what is inside it. **Put items away here**, then scan each item: it is moved there at once. Tap **Done** when you have finished.
+
+- **NFC tags**: tap the **NFC** button at the top (on a device that can read NFC, with Wrkbench at an `https://` address), then hold a spool's sticker to the back of the device: the spool opens. An OpenSpool tag that Wrkbench did not write opens the full inventory with the spools it could be. Tap the button again to stop. See [Spool tags](Spool-tags.md).
+- **Writing a sticker**: on a spool, **Spool tag** writes its NFC sticker, as in the full Wrkbench.
+
+What each role can do is the same as in the full Wrkbench: operators can use stock and move items, viewers can only look.
+
 ## Fetch a spool with a scanner
 
-With the labels kept in one place, such as a board by the printers, a mobile computer finds a spool, takes it out and loads it:
+With the labels kept in one place, such as a board by the printers, a mobile computer finds a spool, takes it out and loads it. The buttons are the same in [handheld mode](#handheld-mode) and in the full Wrkbench:
 
 1. Scan the spool's label. The spool opens.
 2. Press **Find**. The [location display](Location-displays.md#finding-a-spool) where the spool is kept lights it up within about 10 seconds, and Wrkbench says which display and which location.
@@ -127,5 +174,6 @@ Labels keep working after a workspace is exported and imported into an empty Wrk
 
 - A label stops working when its item or location is deleted. An item that was retired because past jobs used it says so when scanned.
 - If Wrkbench moves to a new address, labels printed before the move point at the old one. Keep the old address redirecting to the new one, or reprint.
-- Barcode scanners were checked by sending Wrkbench the keystrokes a scanner sends. They have not yet been checked on a physical Zebra scanner. If a mobile computer's scans do nothing, open **Scan**, tap **Or type a code** and scan again: that way always works. If scans are only read some of the time, set the scanner to send its characters with no delay between them.
+- **Checked on a Zebra TC56** (Android 8.1, Chrome 101) in handheld mode, with the DataWedge settings above: scanning item and location labels, moving an item by scanning a location, putting items away by scanning them, reading NFC stickers and OpenSpool tags, and writing a spool's sticker.
+- **Other mobile computers and USB or Bluetooth scanners** were checked by sending Wrkbench the keystrokes a scanner sends, not on the devices themselves. If scans do nothing, run the **Scanner test** above. Meanwhile, open **Scan**, tap **Or type a code** and scan again: that way always works.
 - Label printing was checked by producing the pages for sizes from 15 to 150 mm, measuring that no text is clipped, and reading every code back by program as a 203 and a 300 dpi printer would print it. It has not yet been checked on a physical label printer: if yours cuts off or shrinks the label, check the paper size, margins and scale in the print window first.

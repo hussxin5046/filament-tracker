@@ -33,7 +33,7 @@ interface Props {
 }
 
 /** Step sizes that suit the scale of the item: grams move in tens, screws in ones. */
-function stepsFor(item: Item, unit: Unit | undefined): number[] {
+export function stepsFor(item: Item, unit: Unit | undefined): number[] {
   const scale = Math.max(item.capacity ?? 0, item.quantity, item.minQuantity);
   if (unit && unit.decimals > 0 && scale < 20) return [0.1, 1];
   if (scale >= 400) return [10, 50, 100];

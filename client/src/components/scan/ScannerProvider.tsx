@@ -9,6 +9,7 @@ import { useCatalog, useItems } from '@/hooks/useCatalog';
 import { findAllByCode, parseScan, type Scan } from '@/lib/scan';
 import { createWedge } from '@/lib/wedge';
 import styles from '@/components/scan/Scan.module.css';
+import { openModalCount } from '@/lib/dialogs';
 
 /** What a scan hands to the page it opens. */
 export interface ScanState {
@@ -26,9 +27,11 @@ interface Scanner {
   /** What a barcode scanner's read does when no dialog has asked for scans itself. */
   openRaw: Handler;
   register: (handler: Handler) => () => void;
+  /** Hand over a scan read some other way: it goes where a barcode scanner's read would (see handheld mode). */
+  dispatch: Handler;
 }
 
-const ScannerContext = createContext<Scanner>({ open: () => 'unknown', openRaw: () => undefined, register: () => () => undefined });
+const ScannerContext = createContext<Scanner>({ open: () => 'unknown', openRaw: () => undefined, register: () => () => undefined, dispatch: () => undefined });
 
 export const useScanner = () => useContext(ScannerContext);
 
@@ -65,7 +68,9 @@ function restore(field: Editable, value: string) {
 
 /**
  * Listens for a barcode scanner on every screen. A handheld scanner, or a Zebra mobile computer set to send
- * keystrokes, types the code and presses Enter; that is told apart from a person typing by its speed.
+ * keystrokes, types the code and presses Enter; that is told apart from a person typing by its speed. A Zebra
+ * mobile computer in Chrome instead hands the whole code to the selected field at once: only a field can take
+ * it, which is why handheld mode keeps one selected.
  *
  * Where the scan goes depends on what has the focus:
  * - nothing typed into: the scan is acted on;
@@ -122,7 +127,7 @@ export function ScannerProvider({ children }: { children: ReactNode }) {
 
   /** With no dialog asking for scans: open what was scanned, unless that would happen behind an open dialog. */
   const byDefault = (raw: string) => {
-    const dialogs = document.querySelectorAll('dialog:modal').length - (unknown === null ? 0 : 1);
+    const dialogs = openModalCount() - (unknown === null ? 0 : 1);
     if (dialogs > 0) toast('Close this first, then scan again.', 'danger');
     else openRaw(raw);
   };
@@ -161,12 +166,31 @@ export function ScannerProvider({ children }: { children: ReactNode }) {
       handler(text);
     };
 
+    // A Zebra mobile computer in Chrome hands the selected field the whole code at once, then presses Enter.
+    const onText = (event: Event) => {
+      if (!(event instanceof InputEvent) || event.inputType !== 'insertText' || !event.data) return;
+      const editable = editableOf(event.target);
+      const starting = wedge.pending() === 0;
+      wedge.feedText(event.data, event.timeStamp);
+      // Before the text goes in, so a field marked data-scan="capture" can be put back as it was.
+      if (starting) began = editable && editable !== 'other' ? { field: editable, value: editable.value } : editable;
+    };
+
     window.addEventListener('keydown', onKey, true);
-    return () => window.removeEventListener('keydown', onKey, true);
+    window.addEventListener('beforeinput', onText, true);
+    return () => {
+      window.removeEventListener('keydown', onKey, true);
+      window.removeEventListener('beforeinput', onText, true);
+    };
   }, []);
 
   const scanner = useMemo<Scanner>(
-    () => ({ open: (scan) => latest.current.open(scan), openRaw: (raw) => latest.current.openRaw(raw), register }),
+    () => ({
+      open: (scan) => latest.current.open(scan),
+      openRaw: (raw) => latest.current.openRaw(raw),
+      register,
+      dispatch: (raw) => (handlers.current.at(-1) ?? latest.current.byDefault)(raw),
+    }),
     [register],
   );
 

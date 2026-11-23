@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   ArrowLeftRight, Boxes, Eye, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Plus, ScanLine, Search, Settings, Sunrise,
+  Smartphone,
 } from 'lucide-react';
 import { CommandMenu } from '@/components/layout/CommandMenu';
 import { ConfirmEmailNotice } from '@/components/layout/ConfirmEmailNotice';
@@ -24,6 +25,7 @@ import { navigateWithTransition, pageArrived } from '@/lib/viewTransition';
 import type { Dashboard, JobRequest, MaintenanceData, ReorderData } from '@/lib/types';
 import { SETTINGS_TABS } from '@/pages/SettingsPage';
 import styles from '@/components/layout/AppShell.module.css';
+import { openModalCount } from '@/lib/dialogs';
 
 interface NavItem extends NavPage {
   /** Shown in the phone tab bar; the rest live under "More". */
@@ -105,7 +107,7 @@ export function AppShell() {
     const onKey = (event: KeyboardEvent) => {
       if (!isShortcut(event, SEARCH_SHORTCUT)) return;
       event.preventDefault();
-      setSearching((open) => (open ? false : !document.querySelector('dialog:modal')));
+      setSearching((open) => (open ? false : openModalCount() === 0));
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -117,6 +119,7 @@ export function AppShell() {
     ...NAV_PAGES.map((page) => ({ id: `page:${page.id}`, label: page.label, group: 'Go to', icon: page.icon, run: () => navigate(page.to) })),
     ...SETTINGS_TABS.map((tab) => ({ id: `settings:${tab.id}`, label: `Settings: ${tab.label}`, group: 'Go to', icon: Settings, run: () => navigate(`/settings?tab=${tab.id}`) })),
     { id: 'do:scan', label: 'Scan a label', group: 'Do', icon: ScanLine, keywords: 'qr barcode nfc camera', run: () => setScanning(true) },
+    { id: 'do:handheld', label: 'Handheld mode', group: 'Do', icon: Smartphone, keywords: 'zebra scanner tc56 mobile computer simple', run: () => navigate('/handheld') },
     { id: 'do:report', label: 'Open the daily report', group: 'Do', icon: Sunrise, keywords: 'today summary', run: () => report.show() },
     ...workspaces
       .filter((w) => w.id !== workspace?.id)
@@ -288,6 +291,15 @@ export function AppShell() {
           </div>
           <Button icon={Plus} onClick={() => switchWorkspace(NEW_WORKSPACE)}>
             New workspace
+          </Button>
+          <Button
+            icon={Smartphone}
+            onClick={() => {
+              setMoreOpen(false);
+              navigate('/handheld');
+            }}
+          >
+            Handheld mode (for a scanner)
           </Button>
           <div className={styles.account}>
             <div className={styles.accountText}>

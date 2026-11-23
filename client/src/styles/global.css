@@ -158,3 +158,37 @@ svg {
     visibility: visible;
   }
 }
+
+/* What client/public/load-errors.js and the app's error boundary show instead of a blank page. */
+.load-error {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: var(--space-6, 1.5rem) var(--space-4, 1rem);
+}
+
+.load-error h1 {
+  margin: 0 0 var(--space-3, 0.75rem);
+  font-size: var(--text-xl, 1.375rem);
+}
+
+.load-error pre {
+  padding: var(--space-3, 0.75rem);
+  border: 1px solid var(--color-border, #ccc);
+  border-radius: var(--radius-md, 6px);
+  background: var(--color-surface, #fff);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-sm, 0.875rem);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.load-error button {
+  min-height: var(--tap-target, 2.75rem);
+  padding: 0 var(--space-4, 1rem);
+  border: 1px solid var(--color-border-strong, #999);
+  border-radius: var(--radius-md, 6px);
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #111);
+  font: inherit;
+  font-weight: var(--weight-bold, 650);
+}
