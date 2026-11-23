@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { CircleAlert, CircleCheck, Nfc } from 'lucide-react';
+import { CircleAlert, CircleCheck, Nfc, ScanBarcode } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Form';
 import { Modal } from '@/components/ui/Modal';
 import { useScanHandler, useScanner } from '@/components/scan/ScannerProvider';
+import { ScannerTestDialog } from '@/components/scan/ScannerTestDialog';
 import { useCatalog, useItems } from '@/hooks/useCatalog';
 import { cameraAvailable, cameraProblem, startScanner } from '@/lib/camera';
 import { listenForTags, nfcAvailable, nfcProblem, type TagContents, type TagSession } from '@/lib/nfc';
@@ -44,6 +45,7 @@ export function ScanDialog({ title = 'Scan a label', hint, onClose, onScan }: Pr
   const video = useRef<HTMLVideoElement>(null);
   const [problem, setProblem] = useState('');
   const [typed, setTyped] = useState('');
+  const [testing, setTesting] = useState(false);
   const [log, setLog] = useState<Array<ScanNote & { id: number }>>([]);
   const nextId = useRef(1);
   const hasCamera = cameraAvailable();
@@ -130,6 +132,7 @@ export function ScanDialog({ title = 'Scan a label', hint, onClose, onScan }: Pr
   };
 
   return (
+    <>
     <Modal title={title} onClose={onClose} onSubmit={submitTyped} footer={<Button onClick={onClose}>{onScan ? 'Done' : 'Close'}</Button>}>
       {hint && <p className={styles.note}>{hint}</p>}
       {hasCamera && !problem ? (
@@ -166,6 +169,11 @@ export function ScanDialog({ title = 'Scan a label', hint, onClose, onScan }: Pr
           ))}
         </ul>
       )}
+      <Button variant="ghost" size="sm" icon={ScanBarcode} className={styles.testLink} onClick={() => setTesting(true)}>
+        Barcode scanner not working? Test it
+      </Button>
     </Modal>
+    {testing && <ScannerTestDialog onClose={() => setTesting(false)} />}
+    </>
   );
 }

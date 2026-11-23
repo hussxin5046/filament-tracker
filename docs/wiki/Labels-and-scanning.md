@@ -99,6 +99,16 @@ Then set up DataWedge, the scanning service already on the device:
 2. Check that **Barcode input** and **Keystroke output** are both on.
 3. Under **Keystroke output**, open **Basic data formatting** and turn on **Send ENTER key**.
 
+### If scans do nothing
+
+Open **Scan** and tap **Barcode scanner not working? Test it**. The **Scanner test** lists everything the scanner sends, the pause before each character, and whether Wrkbench read it as a scan. Nothing opens while it is open.
+
+1. Scan a label.
+2. Tap **Scan into this box** and scan the same label again.
+3. Tap **Copy** and send the result to whoever helps you set up the scanner, or with a bug report.
+
+If the list stays empty when you pull the trigger, the scanner is not sending anything to the browser: check its settings (for a Zebra mobile computer, the DataWedge steps above).
+
 Devices on Android 8 can no longer update Chrome. Wrkbench runs on the last version they got, but that browser gets no more security fixes: use such a device on a network you trust.
 
 ## After a backup is restored
@@ -109,5 +119,5 @@ Labels keep working after a workspace is exported and imported into an empty Wrk
 
 - A label stops working when its item or location is deleted. An item that was retired because past jobs used it says so when scanned.
 - If Wrkbench moves to a new address, labels printed before the move point at the old one. Keep the old address redirecting to the new one, or reprint.
-- Barcode scanners were checked by sending Wrkbench the keystrokes a scanner sends. They have not yet been checked on a physical Zebra scanner. If a mobile computer's scans do nothing, open **Scan**, tap **Or type a code** and scan again: that way always works. If scans are only read some of the time, set the scanner to send its characters with no delay between them.
+- Barcode scanners were checked by sending Wrkbench the keystrokes a scanner sends. They have not yet been checked on a physical Zebra scanner. If a mobile computer's scans do nothing, run the **Scanner test** above. Meanwhile, open **Scan**, tap **Or type a code** and scan again: that way always works. If scans are only read some of the time, set the scanner to send its characters with no delay between them.
 - Label printing was checked by producing the pages for sizes from 15 to 150 mm, measuring that no text is clipped, and reading every code back by program as a 203 and a 300 dpi printer would print it. It has not yet been checked on a physical label printer: if yours cuts off or shrinks the label, check the paper size, margins and scale in the print window first.
