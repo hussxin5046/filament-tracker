@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, MapPin, Search } from 'lucide-react';
+import { Hand, LayoutDashboard, MapPin, ScanLine, Search } from 'lucide-react';
 import { ScannerProvider, useScanHandler } from '@/components/scan/ScannerProvider';
 import { useToast } from '@/components/ui/Toast';
 import { useWorkspace } from '@/context/WorkspaceContext';
@@ -31,30 +31,38 @@ function HandheldFrame() {
   useEffect(() => rememberHandheld(true), []);
 
   // A Zebra mobile computer in Chrome hands a scan to the selected text field, and drops it when there is none.
-  // So a hidden field holds the cursor whenever nothing else that takes typing does. It asks for no on-screen
-  // keyboard, and is marked to be put back as it was after each scan.
+  // Chrome only lets it into a field the person tapped, not one selected by the page on its own. So the "Ready to
+  // scan" bar is a field: tapping it once makes scans land. It asks for no on-screen keyboard, and is put back
+  // as it was after each scan. The bar shows whether it has the cursor, so nobody scans into nothing.
   const scanField = useRef<HTMLInputElement>(null);
+  const [ready, setReady] = useState(false);
   useEffect(() => {
-    let timer = 0;
-    const keep = () => {
-      window.clearTimeout(timer);
-      // After the browser has moved the focus where it is going.
-      timer = window.setTimeout(() => {
-        const active = document.activeElement;
-        const typing = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement || active instanceof HTMLSelectElement || (active instanceof HTMLElement && active.isContentEditable);
-        if (typing || document.hidden || document.querySelector('dialog:modal')) return;
-        scanField.current?.focus({ preventScroll: true });
-      }, 0);
+    const typingIn = (element: Element | null) =>
+      element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement || (element instanceof HTMLElement && element.isContentEditable);
+    const reclaim = () => {
+      if (typingIn(document.activeElement) || document.hidden || document.querySelector('dialog:modal')) return;
+      scanField.current?.focus({ preventScroll: true });
     };
-    keep();
-    document.addEventListener('focusout', keep);
-    document.addEventListener('visibilitychange', keep);
-    window.addEventListener('focus', keep);
+    // Straight after a tap on a button or a link, while the tap still counts as the person's own.
+    const afterTap = (event: Event) => {
+      if (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable]')) return;
+      reclaim();
+    };
+    // After the browser has moved the focus where it is going; this one may not be let through by Chrome.
+    let timer = 0;
+    const later = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(reclaim, 0);
+    };
+    reclaim();
+    document.addEventListener('click', afterTap);
+    document.addEventListener('focusout', later);
+    document.addEventListener('visibilitychange', later);
     return () => {
       window.clearTimeout(timer);
-      document.removeEventListener('focusout', keep);
-      document.removeEventListener('visibilitychange', keep);
-      window.removeEventListener('focus', keep);
+      document.removeEventListener('click', afterTap);
+      document.removeEventListener('focusout', later);
+      document.removeEventListener('visibilitychange', later);
     };
   }, []);
 
@@ -72,6 +80,7 @@ function HandheldFrame() {
 
   return (
     <div className={styles.shell}>
+      <div className={styles.top}>
       <header className={styles.bar}>
         <img src="/icon.svg" alt="" width={24} height={24} />
         <span className={styles.title}>{workspace?.name}</span>
@@ -79,21 +88,30 @@ function HandheldFrame() {
           <LayoutDashboard size={16} aria-hidden /> Full Wrkbench
         </Link>
       </header>
-      <input
-        ref={scanField}
-        className={styles.scanField}
-        inputMode="none"
-        data-scan="capture"
-        aria-label="Scanner input"
-        autoComplete="off"
-        autoCapitalize="off"
-        autoCorrect="off"
-        spellCheck={false}
-        tabIndex={-1}
-        onBlur={(event) => {
-          event.currentTarget.value = '';
-        }}
-      />
+      <label className={`${styles.ready} ${ready ? styles.isReady : styles.notReady}`}>
+        {ready ? <ScanLine size={18} aria-hidden /> : <Hand size={18} aria-hidden />}
+        <span>{ready ? 'Ready to scan' : 'Tap here, then scan'}</span>
+        <input
+          ref={scanField}
+          className={styles.scanField}
+          inputMode="none"
+          data-scan="capture"
+          aria-label="Scanner input"
+          autoComplete="off"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+          // Ready only when the cursor got here from a tap: Chrome does not hand scans to a field the page
+          // selected on its own. Where the browser cannot say, trust it.
+          onFocus={() => setReady(navigator.userActivation?.isActive ?? true)}
+          onClick={() => setReady(true)}
+          onBlur={(event) => {
+            event.currentTarget.value = '';
+            setReady(false);
+          }}
+        />
+      </label>
+      </div>
       <main className={styles.main}>
         <Outlet />
       </main>
