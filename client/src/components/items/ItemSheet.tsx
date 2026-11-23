@@ -105,7 +105,7 @@ export function ItemSheet({ item, catalog, onClose, onEdit, onAddOffcut, focusAm
   }, [lighting]);
   // The display stops by itself after two minutes, and when the item leaves its place (taken out at the display, say).
   useEffect(() => {
-    if (found && ((lighting !== null && now >= lighting) || (!kept && found.state !== 'loaded' && found.state !== 'on-the-move'))) setFound(null);
+    if (found && ((lighting !== null && now >= lighting) || (!kept && (lighting !== null || found.state === 'no-display')))) setFound(null);
   }, [found, lighting, now, kept]);
   // Scanning the next item while this one is open goes straight to it, unless a dialog of this sheet is in the way.
   const scanner = useScanner();
@@ -173,15 +173,15 @@ export function ItemSheet({ item, catalog, onClose, onEdit, onAddOffcut, focusAm
           <Button icon={QrCode} onClick={() => setLabelling(true)}>
             Print label
           </Button>
+          {canOperate && (
+            <Button icon={LocateFixed} onClick={() => void find()} disabled={asking}>
+              Find
+            </Button>
+          )}
           {kept && canOperate && (
-            <>
-              <Button icon={LocateFixed} onClick={() => void find()} disabled={asking}>
-                Find
-              </Button>
-              <Button icon={PackageOpen} onClick={() => void takeOut()} disabled={asking}>
-                Take out
-              </Button>
-            </>
+            <Button icon={PackageOpen} onClick={() => void takeOut()} disabled={asking}>
+              Take out
+            </Button>
           )}
           {isSpool && canOperate && (
             <>

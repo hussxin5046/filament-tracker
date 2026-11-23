@@ -144,11 +144,17 @@ describe('finding a spool', () => {
     expect(await lit(shelfToken)).toBeNull();
   });
 
-  it('stops by itself when the spool is put away somewhere else or loaded into a machine', async () => {
+  it('stops by itself when the spool is put away somewhere else, retired or loaded into a machine', async () => {
     const moved = await spool('PLA Moved', { locationId: shelf });
     await find(moved.id);
     expect(await lit(shelfToken)).toBe('PLA Moved');
     await app.call('POST', ws('/items/move'), operator, { itemIds: [moved.id], locationId: drawer });
+    expect(await lit(shelfToken)).toBeNull();
+
+    const retired = await spool('PLA Retired', { locationId: shelf });
+    await find(retired.id);
+    expect(await lit(shelfToken)).toBe('PLA Retired');
+    await prisma.item.update({ where: { id: retired.id }, data: { archived: true } });
     expect(await lit(shelfToken)).toBeNull();
 
     const loading = await spool('PLA Loading', { locationId: shelf });
@@ -207,6 +213,27 @@ describe('taking a spool out', () => {
     expect(await lit(shelfToken)).toBe('PLA Pink');
     await app.call('PATCH', ws(`/devices/${shelfDisplayId}`), admin, { canWrite: true });
     await app.call('DELETE', ws(`/items/${pink.id}/find`), operator);
+  });
+
+  it('lights one spool at a time on a display, the one asked for last, then the one before', async () => {
+    const first = await spool('PLA First', { locationId: shelf, tagId: 'NFC04CCCCCCCCCCCC' });
+    const second = await spool('PLA Second', { locationId: shelf, tagId: 'NFC04DDDDDDDDDDDD' });
+    await find(first.id);
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000);
+    await find(second.id);
+    expect(await lit(shelfToken)).toBe('PLA Second');
+    // The first was asked for too, so taking it out is no mistake, though the display is lit for the second.
+    const tapped = await app.call('POST', '/device/tag/04CCCCCCCCCCCC/tap', shelfToken, {});
+    expect(tapped.body).toMatchObject({ known: true, message: 'Taken out: on the move' });
+    expect(await lit(shelfToken)).toBe('PLA Second');
+    await find(first.id);
+    await app.call('POST', ws('/items/move'), operator, { itemIds: [first.id], locationId: shelf });
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 2000);
+    await find(first.id);
+    expect(await lit(shelfToken)).toBe('PLA First');
+    expect((await app.call('POST', `/device/item/${first.id}/take-out`, shelfToken)).status).toBe(200);
+    expect(await lit(shelfToken)).toBe('PLA Second');
+    await app.call('DELETE', ws(`/items/${second.id}/find`), operator);
   });
 
   it('a tap at the reader says when it took out a different spool than the one asked for', async () => {

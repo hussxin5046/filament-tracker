@@ -14,7 +14,7 @@ import { describeActivity, logSystemActivity } from '@/services/activity';
 import { boardOf, buildFor, compareVersions, firmwareFile, latestFirmware, MIN_UPDATABLE, type FirmwareManifest } from '@/services/firmware';
 import { buildOverview, displayOnline as isOnline, displayPrinter, displayRow, forDisplay, itemSelect, locationTree, MAX_ROWS, POLL_SECONDS } from '@/services/deviceOverview';
 import { itemForKey, readTagKey, readUid, spoolKey, tagIdFor } from '@/services/deviceTags';
-import { endFind, findForDevice } from '@/services/find';
+import { endFind, findForDevice, isSought } from '@/services/find';
 import { appUrl } from '@/services/mail';
 import { assertInWorkspace, moveItems, takeOut } from '@/services/stock';
 import { assignTag } from '@/services/tags';
@@ -460,11 +460,11 @@ deviceRouter.post('/tag/:uid/tap', async (req, res) => {
     const place = tree.byId.get(device.locationId)?.name ?? 'this location';
     const keptHere = item.locationId !== null && tree.subtree(device.locationId).includes(item.locationId);
     if (keptHere && !item.outSince) {
-      // The spool this display is lit for, if any: taking a different one out is allowed, and said.
-      const sought = await findForDevice(prisma, device);
+      // Taking out a spool nobody asked for, while the display is lit for another, is allowed, and said.
+      const lit = isSought(workspaceId, item.id) ? null : await findForDevice(prisma, device);
       await logChange(device, 'item.move', await takeOut(prisma, item, place), item.id);
       endFind(workspaceId, item.id);
-      message = sought && sought.id !== item.id ? `Taken out. Not the one asked for: ${forDisplay(sought.name, 30)}` : 'Taken out: on the move';
+      message = lit ? `Taken out. Not the one asked for: ${forDisplay(lit.name, 30)}` : 'Taken out: on the move';
     } else {
       await prisma.item.update({ where: { id: item.id }, data: { locationId: device.locationId, outSince: null } });
       await logChange(device, 'item.move', `Put ${item.name} away in ${place}`, item.id);

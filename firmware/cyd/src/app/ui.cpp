@@ -460,7 +460,7 @@ void showOverview() {
   // A spool someone is looking for comes first, whatever else is on the list and wherever it would be sorted.
   const bool lit = overview && overview->hasFind;
   if (lit) {
-    label(list, overview->canWrite ? "Take this one: touch it when you have it" : "Take this one", &lv_font_montserrat_14, ACCENT);
+    label(list, overview->canWrite ? "Take this one, then touch it" : "Take this one", &lv_font_montserrat_14, ACCENT);
     addRow(list, overview->find, overview->canWrite ? onTakeOut : nullptr, nullptr, true);
   }
   if (!overview) {

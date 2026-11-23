@@ -62,14 +62,15 @@ Open a spool in Wrkbench, by scanning its [label](Labels-and-scanning.md#fetch-a
 - It shows on the display within about 10 seconds.
 - A shelf's own display lights up, not the display of the rack the shelf is in.
 - If the display was showing another location or the printer, it goes back to its own list.
+- A display lights one spool at a time. When several kept there are being looked for, it shows the one asked for last, then the one before once that is taken out.
 - It stays lit for two minutes, or until the spool is taken out, put away somewhere else or loaded into a machine. **Stop** in Wrkbench ends it sooner.
 - **Touch the lit row** when you have the spool. It is taken out and is [on the move](#on-the-move). This needs no tag reader. With **Allow changes from this display** off, the row lights but touching it does nothing.
-- With a tag reader, tap the spool as usual. If you tap a different spool from the one asked for, it is still taken out, and the card says **Not the one asked for** and names the right one. **Put away here** puts the wrong one back.
+- With a tag reader, tap the spool as usual. If you tap a spool nobody asked for, it is still taken out, and the card says **Not the one asked for** and names the right one. **Put away here** puts the wrong one back.
 - The display needs firmware 0.4.0 or later. Wrkbench says so when it is older: [update it](#updating-its-firmware).
 
 When no display can light up, Wrkbench still says where the spool is: its location when no display shows it or the display is not connected, the printer and slot when it is loaded, or that it is on the move.
 
-**Find** and **Take out** are for operators, admins and owners, on any item kept in a location.
+**Find** and **Take out** are for operators, admins and owners. **Take out** shows on an item that is kept in a location and not loaded in a machine.
 
 ## The printer beside it
 

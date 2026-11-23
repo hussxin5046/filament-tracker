@@ -43,6 +43,9 @@ function looking(workspaceId: string, now: number): string[] {
   return [...inWorkspace].sort((a, b) => b[1] - a[1]).map(([itemId]) => itemId);
 }
 
+/** Whether someone is looking for this item right now, lit on a display or waiting behind a newer find. */
+export const isSought = (workspaceId: string, itemId: string, now = Date.now()) => looking(workspaceId, now).includes(itemId);
+
 type Tree = Awaited<ReturnType<typeof locationTree>>;
 
 /**
@@ -59,7 +62,10 @@ export function nearestDisplays<T extends { locationId: string | null }>(tree: T
   return [];
 }
 
-/** The item this display should light up, if any: one being looked for whose nearest display it is. */
+/**
+ * The item this display should light up, if any: one being looked for whose nearest display it is. A display
+ * lights one spool at a time, the one asked for last; an earlier one lights when that is taken out.
+ */
 export async function findForDevice(db: Db, device: { id: string; workspaceId: string }, now = Date.now()) {
   const ids = looking(device.workspaceId, now);
   if (!ids.length) return null;
