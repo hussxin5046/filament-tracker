@@ -123,6 +123,13 @@ bool parseOverview(const char *json, size_t len, Overview &out) {
     out.update.size = size;
     copyText(out.update.md5, sizeof out.update.md5, md5);
   }
+  // A spool someone is looking for. Only with its id: touching the lit row names it to the server.
+  JsonObjectConst sought = doc["find"]["row"];
+  const char *soughtId = sought["id"] | "";
+  if (!sought.isNull() && soughtId[0]) {
+    out.hasFind = true;
+    readItem(sought, out.find);
+  }
   return true;
 }
 

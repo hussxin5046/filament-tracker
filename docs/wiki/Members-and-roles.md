@@ -10,7 +10,7 @@ A workspace can be shared with the people you work with. Each member has a **rol
 | --- | --- |
 | **Owner** | Everything an admin can, plus: add and remove members, change roles, turn the job request link on or off, change the workspace's name, currency and target margin, or delete it |
 | **Admin** | Add, change and delete everything else: items, categories, machines, maintenance tasks, suppliers, locations, printers. Price projects, move them between stages and delete them. Review job requests. Undo stock changes. Import data |
-| **Operator** | The day-to-day work: create, start, finish, cancel and reorder jobs; create projects and put jobs in them; take stock away (never add it); log maintenance; load and unload slots, and say which spool goes into a printer next; move items between locations; write and tie spool tags; forget a spool read at a display; comment on job requests and move them along; ask the AI assistant questions |
+| **Operator** | The day-to-day work: create, start, finish, cancel and reorder jobs; create projects and put jobs in them; take stock away (never add it); log maintenance; load and unload slots, and say which spool goes into a printer next; move items between locations; find a spool on its location display and take it out; write and tie spool tags; forget a spool read at a display; comment on job requests and move them along; ask the AI assistant questions |
 | **Viewer** | Look at everything, change nothing. Viewers see the AI summary but cannot ask it questions |
 
 Whoever creates a workspace is its first owner. A workspace can have more than one owner.

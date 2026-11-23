@@ -69,6 +69,27 @@ void test_printer_beside_the_display() {
   TEST_ASSERT_EQUAL_FLOAT(-1.0f, o.printer.progress);
 }
 
+void test_a_spool_someone_is_looking_for() {
+  static Overview o;
+  const char *json = R"({"v":"f","items":[{"id":"a","name":"PLA Black"}],
+    "find":{"row":{"id":"a","name":"PLA Black","sub":"PLA - Bambu Lab","color":"#101010","qty":"500 g","fill":0.5,"low":false,"at":"Shelf 2","tagged":true}}})";
+  TEST_ASSERT_TRUE(parseOverview(json, strlen(json), o));
+  TEST_ASSERT_TRUE(o.hasFind);
+  TEST_ASSERT_EQUAL_STRING("a", o.find.id);
+  TEST_ASSERT_EQUAL_STRING("PLA Black", o.find.name);
+  TEST_ASSERT_EQUAL_STRING("Shelf 2", o.find.at);
+  TEST_ASSERT_EQUAL_HEX32(0x101010, o.find.color);
+  // Nothing being looked for, and a find that does not say which item, light nothing.
+  TEST_ASSERT_TRUE(parseOverview(OVERVIEW, strlen(OVERVIEW), o));
+  TEST_ASSERT_FALSE(o.hasFind);
+  const char *nameless = R"({"v":"g","find":{"row":{"name":"PLA Black"}}})";
+  TEST_ASSERT_TRUE(parseOverview(nameless, strlen(nameless), o));
+  TEST_ASSERT_FALSE(o.hasFind);
+  const char *odd = R"({"v":"h","find":true})";
+  TEST_ASSERT_TRUE(parseOverview(odd, strlen(odd), o));
+  TEST_ASSERT_FALSE(o.hasFind);
+}
+
 void test_overview_without_location_and_bad_json() {
   static Overview o;
   const char *none = R"({"v":"x","poll":2,"location":null,"total":0,"items":[],"locations":[]})";
@@ -224,6 +245,7 @@ static int runAll() {
   RUN_TEST(test_overview_is_read_into_the_fixed_struct);
   RUN_TEST(test_overview_without_location_and_bad_json);
   RUN_TEST(test_printer_beside_the_display);
+  RUN_TEST(test_a_spool_someone_is_looking_for);
   RUN_TEST(test_long_text_is_cut_not_overrun);
   RUN_TEST(test_tag_answers);
   RUN_TEST(test_pair_and_messages);

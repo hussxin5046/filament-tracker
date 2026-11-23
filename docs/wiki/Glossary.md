@@ -23,7 +23,7 @@ Words used in Wrkbench and in this wiki, in alphabetical order.
 | **Low stock** | An item below its minimum stock level. It joins the reorder list |
 | **Machine focus** | Narrowing Wrkbench to one machine with the **Whole workshop** button. See [Getting started](Getting-started.md#whole-workshop-or-one-machine) |
 | **Machine type** | A group of similar machines. Maintenance set on a type covers every machine of that type |
-| **On the move** | A spool taken out at a location display and not yet put away or loaded into a machine. See [Location displays](Location-displays.md#on-the-move) |
+| **On the move** | A spool taken out of its location, at a location display or with **Take out**, and not yet put away or loaded into a machine. See [Location displays](Location-displays.md#on-the-move) |
 | **Offcut** | A usable leftover piece, such as half a sheet. Also called a remnant. See [Inventory](Inventory.md#offcuts) |
 | **Passkey** | A way to sign in with your fingerprint, face or screen lock instead of a password. It is kept by your device and only works on your copy of Wrkbench. See [Getting started](Getting-started.md#passkeys) |
 | **Project** | A piece of work made up of several jobs, usually for one customer. It adds up their cost and shows the profit, or a recommended price. See [Jobs and the queue](Jobs-and-queue.md#projects) |

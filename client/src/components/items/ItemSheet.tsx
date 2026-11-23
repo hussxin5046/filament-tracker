@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Minus, Nfc, Pencil, PlugZap, Plus, QrCode, Scissors, Trash2 } from 'lucide-react';
+import { LocateFixed, Minus, Nfc, PackageOpen, Pencil, PlugZap, Plus, QrCode, Scissors, Trash2 } from 'lucide-react';
+import { FindNote, useFind } from '@/components/items/Find';
 import { StockMeter } from '@/components/items/StockMeter';
 import { LabelPrintDialog } from '@/components/labels/LabelPrintDialog';
 import { useScanHandler, useScanner } from '@/components/scan/ScannerProvider';
@@ -53,6 +54,8 @@ export function ItemSheet({ item, catalog, onClose, onEdit, onAddOffcut, focusAm
   const [tagging, setTagging] = useState(false);
   const [loading, setLoading] = useState(false);
   const { items } = useItems();
+  // Looking for it: the display nearest to where it is kept lights its row, and the sheet says where that is.
+  const finder = useFind(item);
   // Scanning the next item while this one is open goes straight to it, unless a dialog of this sheet is in the way.
   const scanner = useScanner();
   useScanHandler(labelling || tagging || loading ? null : scanner.openRaw);
@@ -119,6 +122,16 @@ export function ItemSheet({ item, catalog, onClose, onEdit, onAddOffcut, focusAm
           <Button icon={QrCode} onClick={() => setLabelling(true)}>
             Print label
           </Button>
+          {canOperate && (
+            <Button icon={LocateFixed} onClick={() => void finder.find()} disabled={finder.busy}>
+              Where is it?
+            </Button>
+          )}
+          {finder.kept && canOperate && (
+            <Button icon={PackageOpen} onClick={() => void finder.takeOut()} disabled={finder.busy}>
+              Take out
+            </Button>
+          )}
           {isSpool && canOperate && (
             <>
               <Button icon={Nfc} onClick={() => setTagging(true)}>
@@ -158,6 +171,8 @@ export function ItemSheet({ item, catalog, onClose, onEdit, onAddOffcut, focusAm
           </div>
         </div>
       </div>
+
+      <FindNote finder={finder} />
 
       <div className={styles.stock}>
         <div className={styles.stockFigure}>

@@ -2,7 +2,7 @@
 
 A location display is a small touch screen fixed to a shelf, rack or dry box. It shows what is stored there and how much of each is left, with anything running low at the top, and updates by itself. Items in a location inside it (a shelf in a rack, say) are shown too, with a small "at Shelf 2" note.
 
-Give it a printer and it also shows what that printer is doing. With an optional tag reader fitted, tapping a spool's [sticker](Spool-tags.md) on the display shows that spool, and can put it away there, mark it as the next spool going into the printer beside it, or link a new sticker to an item.
+When someone looks for a spool kept there, the display [lights it up](#finding-a-spool). Give it a printer and it also shows what that printer is doing. With an optional tag reader fitted, tapping a spool's [sticker](Spool-tags.md) on the display shows that spool, and can put it away there, mark it as the next spool going into the printer beside it, or link a new sticker to an item.
 
 ## What to buy
 
@@ -55,9 +55,26 @@ If the code was mistyped or has run out, the display shows a keyboard: make a ne
 - The screen dims after five minutes untouched.
 - At most 40 items are listed; "+12 more in Wrkbench" says how many are left out.
 
+## Finding a spool
+
+Open a spool in Wrkbench, by scanning its [label](Labels-and-scanning.md#fetch-a-spool-with-a-scanner) or any other way, and press **Where is it?**. The display nearest to where the spool is kept shows it at the top of its list under **Take this one**, with a bright outline that pulses, and goes to full brightness. Wrkbench says which display lit up and where the spool is.
+
+- It shows on the display within about 10 seconds.
+- A shelf's own display lights up, not the display of the rack the shelf is in.
+- If the display was showing another location or the printer, it goes back to its own list.
+- A display lights one spool at a time. When several kept there are being looked for, it shows the one asked for last, then the one before once that is taken out.
+- It stays lit for two minutes, or until the spool is taken out, put away somewhere else or loaded into a machine. **Stop** in Wrkbench ends it sooner.
+- **Touch the lit row** when you have the spool. It is taken out and is [on the move](#on-the-move). This needs no tag reader. With **Allow changes from this display** off, the row lights but touching it does nothing.
+- With a tag reader, tap the spool as usual. If you tap a spool nobody asked for, it is still taken out, and the card says **Not the one asked for** and names the right one. **Put away here** puts the wrong one back.
+- The display needs firmware 0.4.0 or later. Wrkbench says so when it is older: [update it](#updating-its-firmware).
+
+When no display can light up, Wrkbench still says where the spool is: its location when no display shows it or the display is not connected, the printer and slot when it is loaded, or that it is on the move.
+
+**Where is it?** and **Take out** are for operators, admins and owners. **Take out** shows on an item that is kept in a location and not loaded in a machine.
+
 ## The printer beside it
 
-When a display has a **Printer beside it** (see below), a line under the top bar shows that printer: a dot, its state and, while it prints, how far along it is and the time left, with a thin progress line. The dot is blue while it works, green when idle or finished, orange when paused or warning, red when it has stopped or reports a fault, and grey when it is not reporting (the line then says why, such as "Bridge offline"). Updates come every 15 seconds while it prints.
+When a display has a **Printer beside it** (see below), a line under the top bar shows that printer: a dot, its state and, while it prints, how far along it is and the time left, with a thin progress line. The dot is blue while it works, green when idle or finished, orange when paused or warning, red when it has stopped or reports a fault, and grey when it is not reporting (the line then says why, such as "Bridge offline"). Updates come every 10 seconds.
 
 Tap that line for the printer's own screen: progress and time left, the job's name and layer, a dial each for the nozzle and bed temperatures (blue while heating, green at the set temperature, orange while still hot with the heater off), the printer's worst error in red, and up to eight spools along the bottom (A1 is AMS 1 slot 1) with the one feeding now outlined. Tap the top bar to go back; it also goes back by itself after two minutes. On a printer with two nozzles (H2D, X2D), the nozzle dial shows the one printing now.
 
@@ -67,7 +84,7 @@ The status comes from a [connected printer](Connecting-printers.md), so it needs
 
 In **Settings**, **Displays**, each display has:
 
-- **Shows**: the location. It changes on the display within half a minute.
+- **Shows**: the location. It changes on the display within 10 seconds.
 - **Printer beside it**: its status shows on the display (see below), and it is the printer used for "going into the printer" when a spool is tapped.
 - **Allow changes from this display**: on by default. When it is off, tapping a tag only shows the spool.
 - **Rename**, **New set-up code** (to set it up again, say after it was reset) and **Remove**. Removing a display stops it at once: its screen goes back to asking for a code.
@@ -77,7 +94,7 @@ In **Settings**, **Displays**, each display has:
 
 New firmware for displays is published from time to time. When there is some for a display, its card in **Settings**, **Displays** says so and has an **Update to 0.3.1** button (for admins and owners).
 
-1. Press **Update**. The display picks it up within half a minute, while it is connected.
+1. Press **Update**. The display picks it up within 10 seconds, while it is connected.
 2. Its screen shows **Updating firmware** and how far along the download is, then it restarts on the new firmware. It takes a minute or two; leave it plugged in.
 3. Its card shows the new version once the display is back.
 
@@ -116,11 +133,11 @@ Changes made from a display appear in the [activity log](Dashboard-and-reports.m
 
 ### On the move
 
-A spool taken out at a display has no location: it is **on the move**. It shows that way in the inventory and on the spool itself, and **Inventory** has an **On the move** filter while any spool is.
+A spool taken out has no location: it is **on the move**. A spool is taken out by tapping it at a display, by touching its lit row on a display, or with **Take out** on the spool in Wrkbench. It shows that way in the inventory and on the spool itself, and **Inventory** has an **On the move** filter while any spool is.
 
 It stops being on the move when:
 
-- it is tapped on a display, which puts it away there;
+- it is tapped on a display's reader, which puts it away there;
 - you put it away by hand (see [Locations](Locations.md#put-things-away));
 - it is loaded into a machine.
 
@@ -150,7 +167,7 @@ A spool that carries the printer's own tag cannot be given a sticker from the di
 
 ## What the display can do
 
-A display has its own key, separate from any member's sign-in. With it, it can read the items, locations and amounts of its workspace. While **Allow changes** is on, it can also take a tapped spool out of its location or put it away there, mark a spool for its printer and link tags to items kept in its location. It cannot change amounts, delete anything or reach any other part of Wrkbench. If a display is lost, **Remove** it in Settings and its key stops working at once.
+A display has its own key, separate from any member's sign-in. With it, it can read the items, locations and amounts of its workspace. While **Allow changes** is on, it can also take a tapped spool out of its location or put it away there, take out the spool someone is looking for there, mark a spool for its printer and link tags to items kept in its location. It cannot change amounts, delete anything or reach any other part of Wrkbench. If a display is lost, **Remove** it in Settings and its key stops working at once.
 
 ## Troubleshooting
 
@@ -170,5 +187,6 @@ A display has its own key, separate from any member's sign-in. With it, it can r
 
 - **Checked so far:** on a real 2.8" USB-C board (ST7789 panel), set-up from a phone, pairing with an `https://` server, showing a location's items, the printer status (with a simulated printer) and picking up again after the server restarted all work. Still to try on real hardware: the tag reader (the code has not met a real PN532 yet), a real printer's status, a Wi-Fi outage, and removing a display in Settings.
 - **Bambu Lab tags have not been read on real hardware yet.** Tapping in and out, spools on the move and matching them to a printer were checked by sending Wrkbench what a display sends, and the keys that unlock a tag were checked against an independent calculation. The first thing to try: tap a spool the printer has already recognised. If the card says **Not in stock yet**, the id on the tag is not the one the printer reports; link the tag to its spool once with **Sort it out** in **Inventory** and it is known from then on.
-- The display asks for updates every 30 seconds; when nothing changed the answer is a few bytes.
+- **Finding a spool has not been tried on a real display yet.** It was checked by sending Wrkbench what a display sends and reading what it would be told to show, and the firmware was built and its reading of that answer tested. Still to try on real hardware: how the lit row looks across a room, and touching it.
+- The display asks for updates every 10 seconds; when nothing changed the answer is a few bytes.
 - On your own server, `DEVICES_ENABLED=false` switches displays off and `DEVICE_MAX_PER_WORKSPACE` changes the limit of five. See [Self-hosting](Self-hosting.md).

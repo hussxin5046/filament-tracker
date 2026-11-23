@@ -4,7 +4,8 @@ import { z } from 'zod';
 import { prisma, type Json } from '@/db';
 import { HttpError, notFound, param, parse } from '@/http';
 import { describeActivity } from '@/services/activity';
-import { assertInWorkspace, moveItems, moveStock, round } from '@/services/stock';
+import { endFind, findItem } from '@/services/find';
+import { assertInWorkspace, moveItems, moveStock, round, takeOut } from '@/services/stock';
 import { assignTag, TAG_PATTERN } from '@/services/tags';
 
 type FieldValue = string | number | boolean | null;
@@ -221,6 +222,45 @@ export function registerItemRoutes(router: Router): void {
     const { moved, summary, entityId } = await moveItems(prisma, req.workspaceId, itemIds, locationId);
     describeActivity(summary, { type: 'item', id: entityId });
     res.json({ moved: moved.length });
+  });
+
+  /**
+   * "Where is this?", from a scanned label say. Answers where the item is, and the location display nearest to
+   * it lights its row for two minutes or until it is taken out.
+   */
+  router.post('/items/:id/find', async (req, res) => {
+    const id = param(req, 'id');
+    const found = await findItem(prisma, req.workspaceId, id);
+    if (!found) throw notFound('Item');
+    const { displays } = found.answer;
+    describeActivity(displays.length ? `Looked for ${found.name} on ${displays.map((display) => display.name).join(', ')}` : `Looked for ${found.name}`, { type: 'item', id });
+    res.json(found.answer);
+  });
+
+  /** Stop looking: the display goes back to its list on its next check. */
+  router.delete('/items/:id/find', async (req, res) => {
+    const id = param(req, 'id');
+    const item = await prisma.item.findFirst({ where: { id, workspaceId: req.workspaceId }, select: { name: true } });
+    if (!item) throw notFound('Item');
+    endFind(req.workspaceId, id);
+    describeActivity(`Stopped looking for ${item.name}`, { type: 'item', id });
+    res.status(204).end();
+  });
+
+  /** Picking an item off its shelf: it is "on the move" until it is put away or a printer reports it loaded. */
+  router.post('/items/:id/take-out', async (req, res) => {
+    const id = param(req, 'id');
+    const workspaceId = req.workspaceId;
+    const current = await prisma.item.findFirst({
+      where: { id, workspaceId, archived: false },
+      select: { id: true, name: true, outSince: true, location: { select: { name: true } }, slot: { select: { position: true, subUnit: { select: { name: true } } } } },
+    });
+    if (!current) throw notFound('Item');
+    if (current.slot) throw new HttpError(409, `${current.name} is loaded in ${current.slot.subUnit.name} slot ${current.slot.position}. Unload it first.`);
+    if (!current.location) throw new HttpError(409, current.outSince ? `${current.name} is already on the move` : `${current.name} has no location to take it out of`);
+    describeActivity(await takeOut(prisma, current, current.location.name), { type: 'item', id });
+    endFind(workspaceId, id);
+    res.json(present(await prisma.item.findUniqueOrThrow({ where: { id }, include: itemInclude })));
   });
 
   /** Tie a tag to this item (a sticker just written, say), or forget it. The tag leaves any other item. */

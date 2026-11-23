@@ -135,7 +135,7 @@ describe('pairing and the display token', () => {
 
     const { status, body } = await app.call('GET', '/device/overview?nfc=1', token);
     expect(status).toBe(200);
-    expect(body).toMatchObject({ workspace: 'Shop', device: 'Rack display', canWrite: true, total: 4, lowCount: 1, poll: 30 });
+    expect(body).toMatchObject({ workspace: 'Shop', device: 'Rack display', canWrite: true, total: 4, lowCount: 1, poll: 10 });
     expect(body?.location).toEqual({ id: loc.rack, name: 'Rack A', path: 'Workshop / Rack A' });
     const rows = body?.items as Array<Record<string, unknown>>;
     expect(rows.map((row) => row.name)).toEqual(['ABS Low', 'Cafe creme', 'PETG Black', 'PLA White']);
@@ -266,10 +266,9 @@ describe('tapping a tag on the display', () => {
     expect(await prisma.activityLog.count({ where: { workspaceId, userName: 'Dry box', summary: 'Tapped Needs a tag to go into X1C next' } })).toBe(1);
   });
 
-  it('shows the status of the printer beside it, and polls faster while it prints', async () => {
+  it('shows the status of the printer beside it', async () => {
     // The simulated X1C is printing bracket_v3: 37 %, 94 minutes left, layer 112 of 300, AMS 1 slot 1 feeding.
     const { body } = await app.call('GET', '/device/overview', token);
-    expect(body?.poll).toBe(15);
     const printer = body?.printer as Record<string, unknown>;
     expect(printer).toMatchObject({
       name: 'X1C', state: 'Printing', tone: 'busy', progress: 0.37, left: '1 h 34 min left', job: 'bracket_v3', layer: 'Layer 112 of 300',

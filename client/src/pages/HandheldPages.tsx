@@ -1,9 +1,11 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowRightLeft, ChevronRight, CircleAlert, CircleCheck, MapPin, Minus, Nfc, PackageOpen, PackageSearch, Plus, ScanLine, X } from 'lucide-react';
+import { ArrowRightLeft, ChevronRight, CircleAlert, CircleCheck, LocateFixed, MapPin, Minus, Nfc, PackageOpen, PackageSearch, PlugZap, Plus, ScanLine, X } from 'lucide-react';
+import { FindNote, useFind } from '@/components/items/Find';
 import { stepsFor } from '@/components/items/ItemSheet';
 import { StockMeter } from '@/components/items/StockMeter';
 import { useScanHandler } from '@/components/scan/ScannerProvider';
+import { LoadIntoDialog } from '@/components/tags/LoadIntoDialog';
 import { TagDialog } from '@/components/tags/TagDialog';
 import { Button } from '@/components/ui/Button';
 import { Badge, EmptyState, List, Loading, Muted, Row, SectionTitle } from '@/components/ui/Display';
@@ -144,21 +146,40 @@ export function HandheldLocationsPage() {
 /** One item: how much there is, using some, setting the exact amount, and moving it. */
 export function HandheldItemPage() {
   const { id = '' } = useParams();
+  const { items, loading } = useItems();
+  const item = items.find((candidate) => candidate.id === id);
+
+  if (!item) {
+    if (loading) return <Loading />;
+    return (
+      <EmptyState icon={PackageSearch} title="This item is not here" action={<Link to="/handheld"><Button variant="primary">Back to Find</Button></Link>}>
+        It may have been deleted, or it belongs to another workspace.
+      </EmptyState>
+    );
+  }
+
+  return <HandheldItem item={item} />;
+}
+
+/** The item's screen, once the item is known. */
+function HandheldItem({ item }: { item: Item }) {
   const { canEdit, canOperate, wsPath } = useWorkspace();
   const toast = useToast();
   const stock = useStockChange();
-  const { items, loading } = useItems();
+  const { items } = useItems();
   const catalog = useCatalog();
   const { locations, unitById, typeById } = catalog;
   const [exact, setExact] = useState('');
   const [tagging, setTagging] = useState(false);
+  const [loadingInto, setLoadingInto] = useState(false);
   const [moving, setMoving] = useState(false);
   const [target, setTarget] = useState('');
   const [busy, setBusy] = useState(false);
-  const item = items.find((candidate) => candidate.id === id);
+  // Fetching it: Where is it? lights it up on its location display, Take out marks it on the move.
+  const finder = useFind(item);
+  const isSpool = Boolean(spoolFacts(item, catalog).material);
 
   const moveTo = async (location: Location) => {
-    if (!item) return;
     if (item.locationId === location.id) {
       toast(`${item.name} is already in ${location.name}.`);
       setMoving(false);
@@ -190,15 +211,6 @@ export function HandheldItemPage() {
       : null,
   );
 
-  if (!item) {
-    if (loading) return <Loading />;
-    return (
-      <EmptyState icon={PackageSearch} title="This item is not here" action={<Link to="/handheld"><Button variant="primary">Back to Find</Button></Link>}>
-        It may have been deleted, or it belongs to another workspace.
-      </EmptyState>
-    );
-  }
-
   const unit = item.unitId ? unitById.get(item.unitId) : undefined;
   const type = typeById.get(item.itemTypeId);
   const low = isLow(item);
@@ -219,9 +231,11 @@ export function HandheldItemPage() {
         <Muted>
           {[type?.name, item.sku].filter(Boolean).join(' · ')}
         </Muted>
-        {low && (
+        {(low || item.slot || item.outSince) && (
           <div className={styles.badges}>
-            <Badge tone="danger">Low stock</Badge>
+            {low && <Badge tone="danger">Low stock</Badge>}
+            {item.slot && <Badge tone="accent">{`${item.slot.subUnit.name}, slot ${item.slot.position}`}</Badge>}
+            {item.outSince && !item.slot && <Badge tone="info">On the move</Badge>}
           </div>
         )}
       </div>
@@ -232,9 +246,28 @@ export function HandheldItemPage() {
         </Link>
       ) : (
         <p className={styles.where}>
-          <MapPin size={18} aria-hidden /> No location
+          <MapPin size={18} aria-hidden /> {item.slot ? 'In a machine' : item.outSince ? 'On the move' : 'No location'}
         </p>
       )}
+
+      {canOperate && (
+        <div className={styles.fetch}>
+          <Button size="lg" icon={LocateFixed} onClick={() => void finder.find()} disabled={finder.busy}>
+            Where is it?
+          </Button>
+          {finder.kept && (
+            <Button size="lg" icon={PackageOpen} onClick={() => void finder.takeOut()} disabled={finder.busy}>
+              Take out
+            </Button>
+          )}
+          {isSpool && (
+            <Button size="lg" icon={PlugZap} onClick={() => setLoadingInto(true)}>
+              Load into…
+            </Button>
+          )}
+        </div>
+      )}
+      <FindNote finder={finder} />
 
       <div className={itemStyles.stock}>
         <div className={itemStyles.stockFigure}>
@@ -320,12 +353,13 @@ export function HandheldItemPage() {
           </Button>
         ))}
 
-      {canOperate && spoolFacts(item, catalog).material && (
+      {canOperate && isSpool && (
         <Button block size="lg" icon={Nfc} onClick={() => setTagging(true)}>
           Spool tag
         </Button>
       )}
       {tagging && <TagDialog item={item} items={items} catalog={catalog} onClose={() => setTagging(false)} />}
+      {loadingInto && <LoadIntoDialog item={item} items={items} catalog={catalog} onClose={() => setLoadingInto(false)} />}
 
       <Link to={`/inventory?item=${encodeURIComponent(item.id)}`} className={styles.fullLink}>
         Open in the full Wrkbench
