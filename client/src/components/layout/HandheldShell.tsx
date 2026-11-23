@@ -84,6 +84,18 @@ function HandheldFrame() {
   const scanField = useRef<HTMLInputElement>(null);
   const [ready, setReady] = useState(false);
 
+  // Once a scan has landed, the keyboard is put away (the box asks for none) while the box keeps the cursor, so
+  // the next scan can land too. Tapping the box brings the keyboard back, for typing a code by hand.
+  const [keyboard, setKeyboard] = useState(true);
+  useEffect(() => {
+    // Ahead of ScannerProvider's own listener (this one is added first), which stops the Enter that ends a scan.
+    const onEnter = (event: KeyboardEvent) => {
+      if (event.key === 'Enter' && event.target === scanField.current) window.setTimeout(() => setKeyboard(false), 0);
+    };
+    window.addEventListener('keydown', onEnter, true);
+    return () => window.removeEventListener('keydown', onEnter, true);
+  }, []);
+
   // What is in the box when Enter comes is a scan (or a code typed by hand). Usually the scanner's keys are read
   // as a scan before they get here (see ScannerProvider), and the box is left empty. When they are not, because
   // the text came in some other form than expected, the box still holds it.
@@ -146,6 +158,7 @@ function HandheldFrame() {
           ref={scanField}
           className={styles.scanField}
           enterKeyHint="go"
+          inputMode={keyboard ? undefined : 'none'}
           data-scan="capture"
           aria-label="Scanner input"
           placeholder={ready ? 'Scan now' : 'Tap here'}
@@ -155,6 +168,7 @@ function HandheldFrame() {
           spellCheck={false}
           // The page never selects it on its own, only from a tap (see above), so having the cursor is ready.
           onFocus={() => setReady(true)}
+          onClick={() => setKeyboard(true)}
           onKeyDown={(event) => {
             if (event.key !== 'Enter') return;
             event.preventDefault();

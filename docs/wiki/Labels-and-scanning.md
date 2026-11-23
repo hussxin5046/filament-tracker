@@ -93,7 +93,7 @@ Wrkbench tells a scanner from a keyboard by its speed: the code arrives all at o
 
 There is no app to install from a file. Open Wrkbench in Chrome on the device, then choose **Add to Home screen** from Chrome's menu: it gets its own icon and opens full screen. This needs Wrkbench at a secure address (one starting `https://`); at any other address it still works as a page in Chrome.
 
-Use **Handheld mode** on the device (see below). In Chrome, a Zebra mobile computer hands each scan to the text box that has the cursor, and drops it when no box has one. Handheld mode has a **Ready to scan** bar with a box for this. Tapping the box brings up the on-screen keyboard: a TC56 only hands scans to a box that does. In the full Wrkbench, scans only arrive while you are typing in a box, such as **Or type a code** in the Scan window.
+Use **Handheld mode** on the device (see below). In Chrome, a Zebra mobile computer hands each scan to the text box that has the cursor, and drops it when no box has one. Handheld mode has a **Ready to scan** bar with a box for this. Tapping the box brings up the on-screen keyboard: a TC56 only hands scans to a box that does. After the first scan the keyboard is put away while the box stays ready; tap the box to bring it back for typing a code. In the full Wrkbench, scans only arrive while you are typing in a box, such as **Or type a code** in the Scan window.
 
 The built-in scanner does not fire while Chrome has the camera open. Open **Scan** once and tap **Turn off camera (for a device with a scanner built in)**: the device remembers it, and the trigger then works in the Scan window too. **Use camera** turns it back on.
 
