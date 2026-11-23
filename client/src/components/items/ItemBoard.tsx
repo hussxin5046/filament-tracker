@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 import { Plus } from 'lucide-react';
 import { IconButton } from '@/components/ui/Button';
+import { ScrollFrame } from '@/components/ui/ScrollFrame';
 import { StockMeter } from '@/components/items/StockMeter';
 import { Badge, Figure, Swatch, TypeIcon } from '@/components/ui/Display';
 import type { Catalog } from '@/hooks/useCatalog';
@@ -129,41 +130,58 @@ export function ItemBoard({ items, catalog, grouping, hideEmpty, canEdit, focusM
     [grouping, items, catalog, hideEmpty, focusMachineId],
   );
 
-  return (
-    <div className={styles.board} role="list" aria-label={`Inventory by ${grouping}`}>
-      {columns.map((column) => (
-        <section key={column.id} className={styles.column} role="listitem" aria-label={column.title}>
-          <header className={styles.columnHead}>
-            <TypeIcon icon={column.icon} tone={column.tone} size="sm" />
-            <div className={styles.columnHeading}>
-              <h2 className={styles.columnTitle}>{column.title}</h2>
-              {column.hint && <span className={styles.columnHint}>{column.hint}</span>}
-            </div>
-            <span className={styles.columnCount}>{column.count}</span>
-            {canEdit && column.preset && (
-              <IconButton icon={Plus} size="sm" label={`Add item to ${column.title}`} onClick={() => onAdd(column.preset ?? {})} />
-            )}
-          </header>
+  const boardRef = useRef<HTMLDivElement>(null);
+  // Columns are as tall as the space left below the board's start, so the whole column and the sideways
+  // scrollbar are on screen at once and the page itself has nothing left to scroll.
+  useLayoutEffect(() => {
+    const board = boardRef.current;
+    if (!board) return;
+    const measure = () => board.style.setProperty('--board-top', `${Math.round(board.getBoundingClientRect().top + window.scrollY)}px`);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(document.body);
+    window.addEventListener('resize', measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, []);
 
-          <div className={styles.columnBody}>
-            {column.count === 0 && <p className={styles.columnEmpty}>Nothing here yet</p>}
-            {column.sections.map((section) => (
-              <div key={section.id} className={styles.section}>
-                {section.label && (
-                  <h3 className={styles.sectionLabel}>
-                    {section.label}
-                    <span className={styles.sectionCount}>{section.items.length}</span>
-                  </h3>
-                )}
-                {section.items.map((item) => (
-                  <BoardCard key={item.id} item={item} catalog={catalog} onOpen={onOpen} />
-                ))}
+  return (
+    <ScrollFrame scrollerRef={boardRef} scrollerClassName={styles.board} step="item" watch={columns} role="list" aria-label={`Inventory by ${grouping}`}>
+      {columns.map((column) => (
+          <section key={column.id} className={styles.column} role="listitem" aria-label={column.title}>
+            <header className={styles.columnHead}>
+              <TypeIcon icon={column.icon} tone={column.tone} size="sm" />
+              <div className={styles.columnHeading}>
+                <h2 className={styles.columnTitle}>{column.title}</h2>
+                {column.hint && <span className={styles.columnHint}>{column.hint}</span>}
               </div>
-            ))}
-          </div>
-        </section>
-      ))}
-    </div>
+              <span className={styles.columnCount}>{column.count}</span>
+              {canEdit && column.preset && (
+                <IconButton icon={Plus} size="sm" label={`Add item to ${column.title}`} onClick={() => onAdd(column.preset ?? {})} />
+              )}
+            </header>
+  
+            <div className={styles.columnBody}>
+              {column.count === 0 && <p className={styles.columnEmpty}>Nothing here yet</p>}
+              {column.sections.map((section) => (
+                <div key={section.id} className={styles.section}>
+                  {section.label && (
+                    <h3 className={styles.sectionLabel}>
+                      {section.label}
+                      <span className={styles.sectionCount}>{section.items.length}</span>
+                    </h3>
+                  )}
+                  {section.items.map((item) => (
+                    <BoardCard key={item.id} item={item} catalog={catalog} onOpen={onOpen} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+    </ScrollFrame>
   );
 }
 

@@ -86,6 +86,12 @@ export function ReferencePicker({ kinds, onClose, onCollect, onAdded, preset }: 
   };
 
   const kindInfo = summary?.kinds.find((k) => k.kind === kind);
+  // Inside the browse area, so the dialog is the same height on every tab.
+  const attribution = kind === 'filament' && summary && (
+    <p className={styles.attribution}>
+      Filament data from <a href={summary.attribution.filament.url} target="_blank" rel="noreferrer">{summary.attribution.filament.name}</a> ({summary.attribution.filament.licence} licence). Check temperatures against the label on your spool.
+    </p>
+  );
   const title = selected ? titleOf(selected) : 'Add from the catalogue';
 
   return (
@@ -111,29 +117,32 @@ export function ReferencePicker({ kinds, onClose, onCollect, onAdded, preset }: 
       }
     >
       {error && <ErrorNote>{error}</ErrorNote>}
-      {!selected && kinds.length > 1 && (
-        <Tabs tabs={kinds.map((k) => ({ id: k, label: tabLabel(k) }))} active={kind} onChange={(k) => setKind(k)} />
-      )}
+      {!selected && (
+        <div className={styles.browse}>
+          {kinds.length > 1 && <Tabs tabs={kinds.map((k) => ({ id: k, label: tabLabel(k) }))} active={kind} onChange={(k) => setKind(k)} />}
 
-      {!selected && kind === 'machine' && <MachineBrowser summary={summary} onChoose={(entry) => choose({ kind: 'machine', entry })} />}
-      {!selected && kind === 'filament' && <FilamentBrowser initialQuery={preset?.material ?? ''} onChoose={(entry) => choose({ kind: 'filament', entry })} />}
-      {!selected && kind === 'endmill' && (
-        <ListBrowser kind="endmill" group={(e) => e.cutType} title={(e) => e.name} subtitle={(e) => [e.toolMaterial, e.ratedFor].filter(Boolean).join(' · ')} onChoose={(entry) => choose({ kind: 'endmill', entry })} />
-      )}
-      {!selected && kind === 'fastener' && (
-        <ListBrowser
-          kind="fastener"
-          group={(e) => e.kind}
-          title={(e) => e.name}
-          subtitle={(e) => [e.standard, e.materials.map((m) => m.grade ?? m.material).join(' / '), sizeRange(e)].filter(Boolean).join(' · ')}
-          onChoose={(entry) => choose({ kind: 'fastener', entry })}
-        />
-      )}
-      {!selected && kind === 'sheet' && (
-        <ListBrowser kind="sheet" group={(e) => e.material} title={(e) => e.name} subtitle={(e) => `${e.thicknesses.map(fmt).join(', ')} mm${e.note ? ` · ${e.note}` : ''}`} onChoose={(entry) => choose({ kind: 'sheet', entry })} />
-      )}
-      {!selected && kind === 'finish' && (
-        <ListBrowser kind="finish" group={(e) => e.kind} title={(e) => e.name} subtitle={(e) => [e.base, e.sheen, e.variants.map((v) => v.label).join(', ')].filter(Boolean).join(' · ')} onChoose={(entry) => choose({ kind: 'finish', entry })} />
+          {kind === 'machine' && <MachineBrowser summary={summary} onChoose={(entry) => choose({ kind: 'machine', entry })} />}
+          {kind === 'filament' && <FilamentBrowser initialQuery={preset?.material ?? ''} onChoose={(entry) => choose({ kind: 'filament', entry })} />}
+          {kind === 'endmill' && (
+            <ListBrowser kind="endmill" group={(e) => e.cutType} title={(e) => e.name} subtitle={(e) => [e.toolMaterial, e.ratedFor].filter(Boolean).join(' · ')} onChoose={(entry) => choose({ kind: 'endmill', entry })} />
+          )}
+          {kind === 'fastener' && (
+            <ListBrowser
+              kind="fastener"
+              group={(e) => e.kind}
+              title={(e) => e.name}
+              subtitle={(e) => [e.standard, e.materials.map((m) => m.grade ?? m.material).join(' / '), sizeRange(e)].filter(Boolean).join(' · ')}
+              onChoose={(entry) => choose({ kind: 'fastener', entry })}
+            />
+          )}
+          {kind === 'sheet' && (
+            <ListBrowser kind="sheet" group={(e) => e.material} title={(e) => e.name} subtitle={(e) => `${e.thicknesses.map(fmt).join(', ')} mm${e.note ? ` · ${e.note}` : ''}`} onChoose={(entry) => choose({ kind: 'sheet', entry })} />
+          )}
+          {kind === 'finish' && (
+            <ListBrowser kind="finish" group={(e) => e.kind} title={(e) => e.name} subtitle={(e) => [e.base, e.sheen, e.variants.map((v) => v.label).join(', ')].filter(Boolean).join(' · ')} onChoose={(entry) => choose({ kind: 'finish', entry })} />
+          )}
+          {attribution}
+        </div>
       )}
 
       {selected?.kind === 'machine' && <MachineOptions entry={selected.entry} onChange={setPick} />}
@@ -145,11 +154,7 @@ export function ReferencePicker({ kinds, onClose, onCollect, onAdded, preset }: 
 
       {selected && !onCollect && <AddOptions kind={selected.kind} category={kindInfo?.category ?? null} onChange={setOptions} />}
 
-      {kind === 'filament' && summary && (
-        <p className={styles.attribution}>
-          Filament data from <a href={summary.attribution.filament.url} target="_blank" rel="noreferrer">{summary.attribution.filament.name}</a> ({summary.attribution.filament.licence} licence). Check temperatures against the label on your spool.
-        </p>
-      )}
+      {selected && attribution}
     </Modal>
   );
 }

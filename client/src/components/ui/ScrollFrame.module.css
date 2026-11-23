@@ -1,0 +1,44 @@
+/* Sideways scrollers: round arrow buttons at the edges, drawn only while there is more to see that way. */
+.frame {
+  position: relative;
+  min-width: 0;
+}
+
+.scroller {
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.nudge {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  margin-top: -1.1rem;
+  border: var(--border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  /* Fade in and out rather than pop, and let clicks through while hidden. */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration) var(--ease);
+}
+
+.shown {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.left {
+  left: var(--space-2);
+}
+
+.right {
+  right: var(--space-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nudge {
+    transition: none;
+  }
+}

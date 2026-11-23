@@ -39,17 +39,17 @@
 
 /* A steady height, so the dialog does not jump about as the results change. */
 .list {
+  composes: scrollY from '../ui/Scroll.module.css';
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   height: min(22rem, 50vh); /* Chrome before 108 has no dvh */
   height: min(22rem, 50dvh);
   margin: 0 calc(var(--space-2) * -1);
-  overflow-y: auto;
-  overscroll-behavior: contain;
 }
 
 .heading {
+  composes: stickyHeading from '../ui/Scroll.module.css';
   padding: var(--space-1) var(--space-3);
   font-family: var(--font-mono);
   font-size: var(--text-label);

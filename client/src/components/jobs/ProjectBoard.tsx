@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Figure, Ledger, Muted } from '@/components/ui/Display';
+import { ScrollFrame } from '@/components/ui/ScrollFrame';
 import { useAction } from '@/components/ui/Toast';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { api } from '@/lib/api';
@@ -53,7 +54,7 @@ export function ProjectBoard({ projects, onOpen, empty }: Props) {
         ]}
       />
 
-      <div className={styles.columns}>
+      <ScrollFrame scrollerClassName={styles.columns} step="item" watch={projects}>
         {PROJECT_STAGES.map((stage) => {
           const inStage = projects.filter((project) => project.stage === stage);
           const isTarget = over === stage && dragging !== null && projects.find((p) => p.id === dragging)?.stage !== stage;
@@ -133,7 +134,7 @@ export function ProjectBoard({ projects, onOpen, empty }: Props) {
             </section>
           );
         })}
-      </div>
+      </ScrollFrame>
     </div>
   );
 }
