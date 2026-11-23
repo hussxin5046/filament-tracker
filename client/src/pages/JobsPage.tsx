@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Ban, Check, ClipboardList, FolderKanban, Pencil, Play, Plus, Trash2, X } from 'lucide-react';
+import { AddUsedMaterial } from '@/components/jobs/AddUsedMaterial';
 import { JobForm } from '@/components/jobs/JobForm';
 import { PrintQueue } from '@/components/jobs/PrintQueue';
 import { ProjectBoard } from '@/components/jobs/ProjectBoard';
@@ -38,6 +39,7 @@ export function JobsPage() {
   const [tab, setTab] = useState<Tab>('open');
   const [viewId, setViewId] = useState<string | null>(null);
   const [form, setForm] = useState<{ job?: Job } | null>(null);
+  const [addingUsed, setAddingUsed] = useState<Job | null>(null);
   /** The project dialog: an id to open one (with the stage it was dragged to, if it needs a price first), or 'new'. */
   const [projectView, setProjectView] = useState<{ id: string; stage?: ProjectStage } | 'new' | null>(null);
 
@@ -171,7 +173,7 @@ export function JobsPage() {
         </List>
       )}
 
-      {viewing && !form && !projectView && (
+      {viewing && !form && !projectView && !addingUsed && (
         <Modal
           title={viewing.name}
           size="lg"
@@ -182,6 +184,11 @@ export function JobsPage() {
                 {canEdit && (
                   <Button variant="danger" icon={Trash2} onClick={() => remove(viewing)} disabled={busy}>
                     Delete
+                  </Button>
+                )}
+                {(viewing.status === 'completed' || viewing.status === 'failed') && (
+                  <Button icon={Plus} onClick={() => setAddingUsed(viewing)}>
+                    Add material used
                   </Button>
                 )}
                 {isOpen(viewing) && (
@@ -302,6 +309,8 @@ export function JobsPage() {
           onClose={() => setProjectView(null)}
         />
       )}
+
+      {addingUsed && <AddUsedMaterial job={addingUsed} items={items} catalog={catalog} onClose={() => setAddingUsed(null)} />}
 
       {form && <JobForm catalog={catalog} items={items} projects={projects ?? []} job={form.job} defaultMachineId={machine?.id} onClose={() => setForm(null)} />}
     </>
