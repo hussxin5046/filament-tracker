@@ -4,10 +4,13 @@ import '@fontsource-variable/archivo/wdth.css';
 import '@fontsource/ibm-plex-mono/400.css';
 import '@fontsource/ibm-plex-mono/500.css';
 import { App } from '@/App';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import '@/styles/global.css';
 
 createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 );
