@@ -6,7 +6,7 @@ Wrkbench keeps track of what your workshop has in stock, where it is, which mach
 
 ![The sign-in page](images/sign-in.png)
 
-- **Create an account** with your name, email and a password. See [Choosing a password](#choosing-a-password) for what makes one acceptable.
+- **Create an account** with your name, email and a password. See [Choosing a password](#choosing-a-password) for what makes one acceptable. Tick **I confirm I am old enough to use Wrkbench** (at least 13, or 16 where local law requires) before **Create account** becomes available.
 - **Confirm your email.** After you create an account, Wrkbench emails you a link. Open it within a day to show the address is yours. If it is not in your inbox, look in your junk folder. You can use Wrkbench straight away without it, but until you do, nobody can add you to their workspace, and a notice at the top of the page reminds you. **Send the link again** on that notice sends a fresh one. (If whoever runs your copy of Wrkbench has not set up email, there is nothing to confirm and no notice.)
 - **Continue as guest** to look around without registering. You get your own copy of the example maker space, full of sample machines, stock and jobs. If you like it, choose **Create an account** in the sidebar and everything you set up as a guest moves to your new account. A guest that is not turned into an account is deleted after 7 days.
 - **Forgot password?** emails you a link that works once, for one hour. (The person running your copy of Wrkbench has to have set up email for this to arrive.) Choosing a new password this way also confirms your email.

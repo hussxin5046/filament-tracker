@@ -141,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       // A guest who registers stays the same user, so what is on screen is still theirs.
       register: async (name, email, password) =>
-        start(await api.post<Session>('/auth/register', { name, email, password }), Boolean(user?.isGuest)),
+        start(await api.post<Session>('/auth/register', { name, email, password, ageConfirmed: true }), Boolean(user?.isGuest)),
       continueAsGuest: async () => start(await api.post<Session>('/auth/guest')),
       // Both replace this device's token, because the old one stops working along with every other device's.
       changePassword: async (currentPassword, password) =>

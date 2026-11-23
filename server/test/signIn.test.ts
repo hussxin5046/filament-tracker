@@ -81,7 +81,7 @@ describe('signing in', () => {
   });
 
   it('takes new passwords of up to 72 bytes, and still signs in with a longer one set before that limit', async () => {
-    const register = (address: string, password: string) => app.call('POST', '/auth/register', '', { email: address, password, name: 'New' });
+    const register = (address: string, password: string) => app.call('POST', '/auth/register', '', { email: address, password, name: 'New', ageConfirmed: true });
     const fits = 'correct horse battery staple '.repeat(3).slice(0, 72);
     expect((await register('ascii72@example.test', fits)).status).toBe(201);
     const tooLong = await register('ascii73@example.test', `${fits}x`);

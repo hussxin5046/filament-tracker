@@ -176,7 +176,7 @@ describe('setting a password', () => {
   });
 
   const user = () => prisma.user.findUniqueOrThrow({ where: { email: 'old@workshop.test' } });
-  const register = (email: string, password: string, name = 'New Person') => app.call('POST', '/auth/register', '', { email, password, name });
+  const register = (email: string, password: string, name = 'New Person') => app.call('POST', '/auth/register', '', { email, password, name, ageConfirmed: true });
   const login = (password: string) => app.call('POST', '/auth/login', '', { email: 'old@workshop.test', password });
 
   it('refuses a weak password when registering, with the reason, and makes no account', async () => {
