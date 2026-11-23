@@ -21,7 +21,13 @@ const emailField = z.string().trim().toLowerCase().pipe(z.email('Enter a valid e
 const newPassword = z.string();
 // Signing in keeps the old, looser limits: passwords set before today's rules still work.
 const credentials = z.object({ email: emailField, password: z.string().min(1).max(200) });
-const registration = z.object({ email: emailField, password: newPassword, name: z.string().trim().min(1, 'Enter your name').max(80) });
+const registration = z.object({
+  email: emailField,
+  password: newPassword,
+  name: z.string().trim().min(1, 'Enter your name').max(80),
+  // The sign-up form asks people to confirm they are old enough; the server does not take the web app's word for it.
+  ageConfirmed: z.literal(true, { message: 'Confirm that you are old enough to use Wrkbench' }),
+});
 
 interface UserRecord {
   id: string;

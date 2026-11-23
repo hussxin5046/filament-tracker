@@ -31,7 +31,7 @@ afterAll(async () => {
   await app.close();
 });
 
-const register = (email: string, token = '') => app.call('POST', '/auth/register', token, { email, password: 'a good password', name: 'New Person' });
+const register = (email: string, token = '') => app.call('POST', '/auth/register', token, { email, password: 'a good password', name: 'New Person', ageConfirmed: true });
 const addMember = (email: string) => app.call('POST', `/workspaces/${workspaceId}/members`, ownerToken, { email, role: 'operator' });
 /** The token in the newest email to this address with this subject. */
 function linkToken(to: string, subject: RegExp): string {
@@ -43,6 +43,13 @@ function linkToken(to: string, subject: RegExp): string {
 const mailsTo = (to: string, subject: RegExp) => printed.filter((text) => text.includes(`To: ${to}`) && subject.test(text)).length;
 
 describe('confirming an email address', () => {
+  it('refuses to make an account unless age is confirmed', async () => {
+    const body = { email: 'young@workshop.test', password: 'a good password', name: 'New Person' };
+    expect((await app.call('POST', '/auth/register', '', body)).status).toBe(400);
+    expect((await app.call('POST', '/auth/register', '', { ...body, ageConfirmed: false })).status).toBe(400);
+    expect(await prisma.user.findUnique({ where: { email: body.email } })).toBeNull();
+  });
+
   it('sends a link on registering, and the account cannot be added to a workspace until it is opened', async () => {
     const created = await register('newcomer@workshop.test');
     expect(created.status).toBe(201);
