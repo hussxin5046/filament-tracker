@@ -53,7 +53,7 @@ does not answer, and the page falls back to showing the set-up code for a phone.
 
 Displays update themselves from Settings (see [Updating its firmware](../docs/wiki/Location-displays.md#updating-its-firmware)).
 A release needs no commit and no deploy of the app: the version comes from its tag, and servers look for new
-releases by themselves (at most once an hour). Commit your firmware changes to `main` (through a pull request when
+releases by themselves (at most once an hour, or at once with **Check for new firmware** in Settings, Displays). Commit your firmware changes to `main` (through a pull request when
 you want the build checked first), then either:
 
 - **On GitHub:** Releases → **Draft a new release** → choose a new tag `firmware-v0.3.3` on `main` → Publish. Write

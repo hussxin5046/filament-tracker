@@ -11,7 +11,7 @@ import { isStickerTag } from '@/integrations/spoolMatch';
 import { rateLimit } from '@/rateLimit';
 import { notifyWorkspaceSoon } from '@/realtime';
 import { describeActivity, logSystemActivity } from '@/services/activity';
-import { boardOf, buildFor, compareVersions, firmwareFile, latestFirmware, MIN_UPDATABLE, type FirmwareManifest } from '@/services/firmware';
+import { boardOf, buildFor, checkFirmwareNow, compareVersions, firmwareFile, latestFirmware, MIN_UPDATABLE, type FirmwareManifest } from '@/services/firmware';
 import { buildOverview, displayOnline as isOnline, displayPrinter, displayRow, forDisplay, itemSelect, locationTree, MAX_ROWS, POLL_SECONDS } from '@/services/deviceOverview';
 import { isSpoolKey, itemForKey, readTagKey, readUid, spoolKey, tagIdFor } from '@/services/deviceTags';
 import { endFind, findForDevice, isSought } from '@/services/find';
@@ -172,6 +172,17 @@ export function registerDeviceRoutes(router: Router): void {
     const manifest = await latestFirmware();
     const builds = (manifest?.builds ?? []).filter((b) => b.full).map((b) => ({ model: b.model, name: b.name, size: b.full!.size }));
     res.json({ version: manifest && builds.length ? manifest.version : null, builds });
+  });
+
+  /**
+   * "Check for new firmware" in Settings: look for a new release now instead of within the hour. Changes nothing
+   * but what is offered, and is for admins like every other display setting.
+   */
+  router.post('/firmware/check', async (req, res) => {
+    requireEnabled();
+    const { manifest, reached, checkedAt } = await checkFirmwareNow();
+    if (manifest) notifyWorkspaceSoon(req.workspaceId);
+    res.json({ version: manifest?.version ?? null, reached, checkedAt });
   });
 
   /** A board's full image (bootloader, partition table and app), written at offset 0 by the browser. */
