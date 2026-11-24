@@ -80,7 +80,14 @@ export function statusNoteFor(feeder: Feeder): string {
 const isDrying = (statusNote: string) => statusNote.startsWith('Drying');
 
 /** The material, colour and tag of a stock item, read from its type's own fields (workspaces name them freely). */
-export function spoolFacts(item: NonNullable<SlotRow['item']>): SpoolFacts {
+/** What spoolFacts reads from a stock item: its field values, its type's fields and its tag. */
+export interface SpoolFactsSource {
+  fields: Prisma.JsonValue;
+  tagId: string | null;
+  itemType: { fields: Array<{ key: string; label: string; fieldType: string }> };
+}
+
+export function spoolFacts(item: SpoolFactsSource): SpoolFacts {
   const values = (item.fields ?? {}) as Record<string, unknown>;
   const fields = item.itemType.fields;
   const materialField = fields.find((field) => field.key === 'material') ?? fields.find((field) => /material/i.test(field.label));

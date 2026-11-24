@@ -119,11 +119,64 @@ void test_tag_answers() {
   TEST_ASSERT_TRUE(t.canPutAway);
   TEST_ASSERT_TRUE(t.canInsert);
   TEST_ASSERT_EQUAL_STRING("X1C", t.printer);
+  TEST_ASSERT_FALSE(t.canWriteSticker);
+  const char *writable = R"({"known":true,"uid":"04A1B2","item":{"name":"PLA"},"canWriteSticker":true})";
+  TEST_ASSERT_TRUE(parseTag(writable, strlen(writable), t));
+  TEST_ASSERT_TRUE(t.canWriteSticker);
   const char *unknown = R"({"known":false,"uid":"11223344","canLink":true})";
   TEST_ASSERT_TRUE(parseTag(unknown, strlen(unknown), t));
   TEST_ASSERT_FALSE(t.known);
   TEST_ASSERT_TRUE(t.canLink);
   TEST_ASSERT_FALSE(parseTag("{}", 2, t));
+}
+
+// A link to https://wrkbench.example/s/abc and {"type":"PLA"}, as the server builds a sticker.
+static const char STICKER_HEX[] =
+    "033C910117550477726B62656E63682E6578616D706C652F732F61626352100E6170706C69636174696F6E2F6A736F6E7B2274797065223A22504C41227DFE";
+
+void test_sticker_to_write() {
+  static Sticker s;
+  char json[400];
+  snprintf(json, sizeof json, R"({"sticker":"%s"})", STICKER_HEX);
+  TEST_ASSERT_TRUE(parseSticker(json, strlen(json), s));
+  TEST_ASSERT_EQUAL(63, s.len);
+  TEST_ASSERT_EQUAL_HEX8(0x03, s.bytes[0]);
+  TEST_ASSERT_EQUAL_HEX8(0x04, s.bytes[6]);  // "https://" in short
+  TEST_ASSERT_EQUAL_HEX8(0xFE, s.bytes[62]);
+  TEST_ASSERT_EQUAL(16, stickerPages(s.len));
+  TEST_ASSERT_EQUAL(1, stickerPages(1));
+  TEST_ASSERT_EQUAL(1, stickerPages(4));
+  uint8_t page[4];
+  stickerPage(s, 0, page);
+  const uint8_t first[4] = {0x03, 0x3C, 0x91, 0x01};
+  TEST_ASSERT_EQUAL_HEX8_ARRAY(first, page, 4);
+  stickerPage(s, 15, page);  // bytes 60-62, then a zero to fill the page
+  const uint8_t last[4] = {0x22, 0x7D, 0xFE, 0x00};
+  TEST_ASSERT_EQUAL_HEX8_ARRAY(last, page, 4);
+
+  // Anything that is not a whole NDEF TLV is refused, so nothing half-meant is written.
+  TEST_ASSERT_FALSE(parseSticker(R"({"ok":true})", 11, s));
+  TEST_ASSERT_EQUAL(0, s.len);
+  TEST_ASSERT_FALSE(parseSticker(R"({"sticker":"03"})", 16, s));
+  TEST_ASSERT_FALSE(parseSticker(R"({"sticker":"0302D100FE0"})", 25, s));   // odd length
+  TEST_ASSERT_FALSE(parseSticker(R"({"sticker":"0303D100FE"})", 24, s));    // length says more than is there
+  TEST_ASSERT_FALSE(parseSticker(R"({"sticker":"0102D100FE"})", 24, s));    // not an NDEF TLV
+  TEST_ASSERT_FALSE(parseSticker(R"({"sticker":"0302D10000"})", 24, s));    // no terminator
+  TEST_ASSERT_FALSE(parseSticker(R"({"sticker":"0302D1XXFE"})", 24, s));
+  TEST_ASSERT_TRUE(parseSticker(R"({"sticker":"0302d100fe"})", 24, s));     // either case
+  TEST_ASSERT_TRUE(parseSticker(R"({"sticker":"03FF0002D100FE"})", 28, s)); // the three-byte length form
+
+  // Capability containers: NTAG215 and NTAG216, an NTAG213, one not formatted for NDEF, one locked.
+  const uint8_t ntag215[4] = {0xE1, 0x10, 0x3E, 0x00};
+  const uint8_t ntag216[4] = {0xE1, 0x10, 0x6D, 0x00};
+  const uint8_t ntag213[4] = {0xE1, 0x10, 0x12, 0x00};
+  const uint8_t blank[4] = {0x00, 0x00, 0x00, 0x00};
+  const uint8_t locked[4] = {0xE1, 0x10, 0x3E, 0x0F};
+  TEST_ASSERT_EQUAL(496, stickerCapacity(ntag215));
+  TEST_ASSERT_EQUAL(872, stickerCapacity(ntag216));
+  TEST_ASSERT_EQUAL(144, stickerCapacity(ntag213));
+  TEST_ASSERT_EQUAL(0, stickerCapacity(blank));
+  TEST_ASSERT_EQUAL(0, stickerCapacity(locked));
 }
 
 void test_pair_and_messages() {
@@ -248,6 +301,7 @@ static int runAll() {
   RUN_TEST(test_a_spool_someone_is_looking_for);
   RUN_TEST(test_long_text_is_cut_not_overrun);
   RUN_TEST(test_tag_answers);
+  RUN_TEST(test_sticker_to_write);
   RUN_TEST(test_pair_and_messages);
   RUN_TEST(test_codes_and_addresses_as_typed);
   RUN_TEST(test_colours_uids_backoff_and_ages);

@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Messages shared by the Wrkbench server and the Wrkbench bridge",
+  "description": "Messages shared by the Wrkbench server and the Wrkbench bridge, and the spool sticker format the web app shares with the server",
   "exports": {
     ".": "./src/index.ts",
-    "./fixtures": "./src/fixtures.ts"
+    "./fixtures": "./src/fixtures.ts",
+    "./openspool": "./src/openspool.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

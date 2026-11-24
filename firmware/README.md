@@ -99,7 +99,7 @@ Every poll reports the running version as `fw=`.
 | Path | What it is |
 |---|---|
 | `cyd/platformio.ini` | Board, libraries (pinned) and the panel variants |
-| `cyd/src/app/` | The display: `main` (start-up), `display` (screen, touch, LVGL), `portal` (set-up page for a phone), `net` (server and firmware updates, on its own task), `ui` (screens), `store` (saved settings), `reader_pn532` (optional tag reader) |
+| `cyd/src/app/` | The display: `main` (start-up), `display` (screen, touch, LVGL), `portal` (set-up page for a phone), `net` (server and firmware updates, on its own task), `ui` (screens), `store` (saved settings), `reader_pn532` (optional tag reader: reads tags, writes spool stickers) |
 | `cyd/src/bringup/` | Colour bars and touch test for a new board |
 | `cyd/lib/wb_core/` | Parsing and tidying with no Arduino code in it, so it is tested on a computer |
 | `cyd/lib/wb_bambu/` | The keys that unlock a Bambu Lab spool tag (SHA-256, HMAC and HKDF with no Arduino code), also tested on a computer |

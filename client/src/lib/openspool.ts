@@ -1,3 +1,4 @@
+import { cannotWriteSticker, openSpoolRecord, type OpenSpoolRecord, type SpoolSource } from '@filament-tracker/protocol/openspool';
 import type { Catalog } from '@/hooks/useCatalog';
 import { spoolFacts } from '@/lib/spoolMatch';
 import type { Detected, Item } from '@/lib/types';
@@ -8,68 +9,19 @@ import type { Detected, Item } from '@/lib/types';
  * link to the spool in stock, and reads either. Readers skip records and keys they do not know.
  */
 
-export interface OpenSpoolRecord {
-  protocol: 'openspool';
-  version: '1.0';
-  /** Material: "PLA", "PETG" … */
-  type: string;
-  /** Six hexadecimal digits, no "#". */
-  color_hex: string;
-  brand: string;
-  /** Nozzle temperatures in °C, as text, as the format has them. */
-  min_temp: string;
-  max_temp: string;
-}
+export type { OpenSpoolRecord } from '@filament-tracker/protocol/openspool';
 
-/**
- * Usual nozzle ranges, used only when a spool in stock does not say its own. A reader acts on these numbers,
- * so a tag is never written without them.
- */
-const USUAL_TEMPS: Array<[material: RegExp, min: number, max: number]> = [
-  [/^pla/i, 190, 220],
-  [/^petg/i, 220, 250],
-  [/^(abs|asa)/i, 240, 270],
-  [/^tpu/i, 210, 240],
-  [/^(pa|nylon)/i, 260, 290],
-  [/^pc/i, 260, 290],
-];
-
-function temperatures(item: Item, material: string): [number, number] | null {
-  const raw = item.fields.nozzle_temp;
-  const numbers = typeof raw === 'number' ? [raw] : typeof raw === 'string' ? (raw.match(/\d+/g) ?? []).map(Number) : [];
-  const sensible = numbers.filter((value) => value >= 100 && value <= 500);
-  if (sensible.length >= 2) return [Math.min(...sensible), Math.max(...sensible)];
-  if (sensible.length === 1) return [sensible[0], sensible[0]];
-  const usual = USUAL_TEMPS.find(([pattern]) => pattern.test(material));
-  return usual ? [usual[1], usual[2]] : null;
+/** What the shared sticker format needs to know about a spool in stock. */
+function source(item: Item, catalog: Catalog): SpoolSource {
+  const facts = spoolFacts(item, catalog);
+  return { material: facts.material, colour: facts.colour, brand: item.fields.brand, nozzleTemp: item.fields.nozzle_temp };
 }
 
 /** Why a tag cannot be written for an item, in words for whoever is holding the sticker; null when it can. */
-export function cannotTag(item: Item, catalog: Catalog): string | null {
-  const facts = spoolFacts(item, catalog);
-  if (!facts.material) return 'Only filament spools can be written to a spool tag: this item has no material.';
-  if (!temperatures(item, facts.material)) return `Add a nozzle temperature to this spool first: there is no usual one for ${facts.material}, and readers need it.`;
-  return null;
-}
+export const cannotTag = (item: Item, catalog: Catalog): string | null => cannotWriteSticker(source(item, catalog));
 
 /** The record to write for a spool in stock, or null when the item is not a spool or lacks what a reader needs. */
-export function toOpenSpool(item: Item, catalog: Catalog): OpenSpoolRecord | null {
-  const facts = spoolFacts(item, catalog);
-  if (!facts.material) return null;
-  const temps = temperatures(item, facts.material);
-  if (!temps) return null;
-  const brand = item.fields.brand;
-  return {
-    protocol: 'openspool',
-    version: '1.0',
-    type: facts.material,
-    // A spool with no colour recorded is written as white rather than left out: readers expect the key.
-    color_hex: (facts.colour ?? '#ffffff').slice(1).toUpperCase(),
-    brand: typeof brand === 'string' && brand.trim() ? brand.trim() : 'Generic',
-    min_temp: String(temps[0]),
-    max_temp: String(temps[1]),
-  };
-}
+export const toOpenSpool = (item: Item, catalog: Catalog): OpenSpoolRecord | null => openSpoolRecord(source(item, catalog));
 
 const text = (value: unknown): string | null => (typeof value === 'string' || typeof value === 'number' ? String(value).trim() || null : null);
 

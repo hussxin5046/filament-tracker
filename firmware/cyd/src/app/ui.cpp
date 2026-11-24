@@ -63,6 +63,11 @@ wb::TagInfo *tag = nullptr;
 char tagNote[96] = "";
 wb::ItemList *untagged = nullptr;
 char pendingLinkItem[wb::ID_LEN] = "";
+// A sticker being written: what to write, onto which tag, and whether the reader is waiting for it now.
+wb::Sticker *toWrite = nullptr;
+char writeUid[40] = "";
+bool writing = false;
+bool writeAfterLink = false;  // the tag was linked just before, and stays linked whatever the write does
 lv_obj_t *toastLabel = nullptr;
 lv_timer_t *toastTimer = nullptr;
 bool aboutArmed = false;  // "Set up again" needs a second press
@@ -723,6 +728,11 @@ void closeCard() {
   tagNote[0] = '\0';
   free(untagged);
   untagged = nullptr;
+  // Closing the card (by hand, after 20 s or for a new tap) stops waiting for the sticker.
+  if (writing) reader::cancelWrite();
+  writing = false;
+  free(toWrite);
+  toWrite = nullptr;
 }
 
 void onCloseCard(lv_event_t *) { closeCard(); }
@@ -759,6 +769,85 @@ void sendTagCommand(net::CommandType type) {
 }
 
 void onPutAway(lv_event_t *) { sendTagCommand(net::CommandType::PutAway); }
+void onWriteSticker(lv_event_t *) { sendTagCommand(net::CommandType::Sticker); }
+
+/** The card while the reader waits for the sticker, or after a write that did not take. */
+void showWriting(const char *headline, const char *detail, bool retry) {
+  lv_obj_t *c = openCard();
+  lv_obj_t *h = label(c, headline, &lv_font_montserrat_20);
+  lv_obj_set_width(h, W - 40);
+  oneLine(h);
+  lv_obj_t *d = label(c, detail, &lv_font_montserrat_14, MUTED);
+  lv_obj_set_width(d, W - 40);
+  lv_label_set_long_mode(d, LV_LABEL_LONG_WRAP);
+  lv_obj_align(d, LV_ALIGN_TOP_LEFT, 0, 32);
+  lv_obj_t *row = plainBox(c);
+  lv_obj_set_size(row, lv_pct(100), 44);
+  lv_obj_align(row, LV_ALIGN_BOTTOM_MID, 0, 0);
+  lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+  lv_obj_set_flex_align(row, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_set_style_pad_column(row, 8, 0);
+  if (retry) {
+    button(row, "Try again", [](lv_event_t *) {
+      if (!toWrite) return;
+      reader::write(writeUid, *toWrite);
+      writing = true;
+      showWriting("Writing the sticker", "Hold the sticker still against the reader.", false);
+    }, nullptr, ACCENT);
+  } else {
+    lv_obj_t *sp = lv_spinner_create(row);
+    lv_obj_set_size(sp, 32, 32);
+  }
+  button(row, retry ? "Close" : "Cancel", onCloseCard);
+}
+
+/** The server handed over a sticker for the tag on the card: wait for it on the reader and write it. */
+void startWriting(wb::Sticker *sticker, const char *done) {
+  free(toWrite);
+  toWrite = sticker;
+  if (!tag) {
+    // The card was closed meanwhile (another tag was tapped): nothing to write onto.
+    free(toWrite);
+    toWrite = nullptr;
+    if (done[0]) toast(done, lv_color_hex(0x1F5130));
+    return;
+  }
+  wb::copyText(writeUid, sizeof writeUid, tag->uid);
+  reader::write(writeUid, *toWrite);
+  writing = true;
+  writeAfterLink = done[0] != '\0';
+  // After a link the sticker is usually still on the reader, and this card is gone in a moment.
+  showWriting(done[0] ? done : "Writing the sticker", "Hold the sticker against the reader to write the spool's link and details onto it.", false);
+}
+
+void onWritten(reader::WriteOutcome outcome) {
+  if (!writing) return;
+  const char *still = writeAfterLink ? " It is still linked." : "";
+  char text[140];
+  switch (outcome) {
+    case reader::WriteOutcome::Written:
+      closeCard();
+      toast("Sticker written. Tap it with any phone to open the spool.", lv_color_hex(0x1F5130));
+      break;
+    case reader::WriteOutcome::WrongTag:
+      showWriting("That is another tag", "Hold the sticker this is for against the reader.", false);
+      break;
+    case reader::WriteOutcome::NotWritable:
+      snprintf(text, sizeof text, "This tag cannot be written: use an NTAG215 or NTAG216 sticker.%s", still);
+      closeCard();
+      toast(text, DANGER);
+      break;
+    case reader::WriteOutcome::TooSmall:
+      snprintf(text, sizeof text, "Too small for a spool's details: use an NTAG215 or NTAG216 sticker.%s", still);
+      closeCard();
+      toast(text, DANGER);
+      break;
+    case reader::WriteOutcome::Failed:
+      writing = false;
+      showWriting("Not written", "The sticker moved away or did not take it. Hold it still and try again.", true);
+      break;
+  }
+}
 void onInsert(lv_event_t *) { sendTagCommand(net::CommandType::Insert); }
 
 void showTagCard() {
@@ -825,6 +914,11 @@ void showTagCard() {
   lv_obj_set_width(w, W - 40);
   oneLine(w);
   lv_obj_align(w, LV_ALIGN_TOP_LEFT, 0, 94);
+  if (tag->canWriteSticker) {
+    // Above the row of actions, which has no room left: a sticker is written now and then, not on every tap.
+    lv_obj_t *b = button(c, LV_SYMBOL_EDIT "  Write sticker", onWriteSticker);
+    lv_obj_align(b, LV_ALIGN_TOP_LEFT, 0, 116);
+  }
 
   lv_obj_t *row = plainBox(c);
   lv_obj_set_size(row, lv_pct(100), 44);
@@ -939,6 +1033,9 @@ void handle(net::Result &result) {
       if (overview) showOverview();
       toast(result.message, lv_color_hex(0x5A2328));
       break;
+    case net::ResultType::Sticker:
+      startWriting(static_cast<wb::Sticker *>(result.data), result.message);
+      break;
     case net::ResultType::Action:
       closeCard();
       toast(result.message, result.ok ? lv_color_hex(0x1F5130) : lv_color_hex(0x5A2328));
@@ -981,6 +1078,8 @@ void openScreen(char key) {
 void poll() {
   net::Result result;
   while (net::receive(result)) handle(result);
+  reader::WriteOutcome outcome;
+  while (reader::written(outcome)) onWritten(outcome);
 
   // A tapped tag: the server tags the spool in or out and says what it is.
   char uid[24];

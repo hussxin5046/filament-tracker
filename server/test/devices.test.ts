@@ -5,6 +5,7 @@ import { bridgeConnected, ingestReport, resetRegistry, setLinkStatus, trackPrint
 import { displayPrinter, forDisplay } from '@/services/deviceOverview';
 import { emptyReading } from '@/integrations/types';
 import { member, startApp } from './http';
+import { readSticker } from './ndef';
 
 /**
  * Location displays: set-up codes, the display's own token, the overview it draws, and tapping tags on its reader.
@@ -241,6 +242,34 @@ describe('tapping a tag on the display', () => {
     await prisma.item.update({ where: { id: printerTagged.id }, data: { locationId: printerTagged.locationId } });
   });
 
+  it('hands the display a spool\'s sticker to write when it links one, and again on request', async () => {
+    const spool = await prisma.item.findFirstOrThrow({ where: { name: 'Needs a tag' } });
+    const linked = await app.call('POST', '/device/tag/AABBCCDDEEFF01/link', token, { itemId: (await item('Fresh spool', { locationId: loc.rack })).id });
+    const records = readSticker(String(linked.body?.sticker));
+    expect(records[0].text).toMatch(/^https?:\/\/.+\/s\/c[a-z0-9]+$/);
+    expect(JSON.parse(records[1].text)).toEqual({
+      protocol: 'openspool', version: '1.0', type: 'PLA', color_hex: '1A1A1A', brand: 'Bambu Lab', min_temp: '190', max_temp: '220',
+    });
+
+    // The sticker linked earlier, for "Write sticker" on its card.
+    expect((await app.call('GET', '/device/tag/11223344', token)).body).toMatchObject({ canWriteSticker: true });
+    const again = await app.call('GET', '/device/tag/11223344/sticker', token);
+    expect(readSticker(String(again.body?.sticker))[0].text).toMatch(new RegExp(`/s/${spool.id}$`));
+
+    // Not a spool: linked, but nothing to write.
+    const plain = await item('Hex keys', { locationId: loc.rack, fields: {} });
+    const noSticker = await app.call('POST', '/device/tag/0A0B0C0D/link', token, { itemId: plain.id });
+    expect(noSticker.status).toBe(200);
+    expect(noSticker.body?.sticker).toBeUndefined();
+    expect((await app.call('GET', '/device/tag/0A0B0C0D', token)).body).toMatchObject({ canWriteSticker: false });
+    expect((await app.call('GET', '/device/tag/0A0B0C0D/sticker', token)).body).toMatchObject({ error: expect.stringMatching(/no material/) });
+
+    // A Bambu Lab spool's own tag is never written.
+    expect((await app.call('GET', '/device/tag/T0123456789ABCDEF0123456789ABCDEF', token)).body).toMatchObject({ known: true, canWriteSticker: false });
+    expect((await app.call('GET', '/device/tag/T0123456789ABCDEF0123456789ABCDEF/sticker', token)).status).toBe(409);
+    expect((await app.call('GET', '/device/tag/99999999/sticker', token)).status).toBe(404);
+  });
+
   it('marks a spool for the printer beside it only while that printer is reporting', async () => {
     const printer = simFleet()[0];
     machineId = (await prisma.machine.create({ data: { workspaceId, name: 'X1C' } })).id;
@@ -287,6 +316,8 @@ describe('tapping a tag on the display', () => {
     expect((await app.call('POST', '/device/tag/04A1B2C3D4E5F6/put-away', token)).status).toBe(403);
     expect((await app.call('POST', '/device/tag/11223344/insert', token)).status).toBe(403);
     expect((await app.call('POST', '/device/tag/AABBCCDD/link', token, { itemId: spare.id })).status).toBe(403);
+    expect((await app.call('GET', '/device/tag/11223344', token)).body).toMatchObject({ canWriteSticker: false });
+    expect((await app.call('GET', '/device/tag/11223344/sticker', token)).status).toBe(403);
     expect((await app.call('GET', '/device/overview', token)).body).toMatchObject({ canWrite: false });
   });
 });

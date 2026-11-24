@@ -4,6 +4,8 @@
  * by the phone itself opening the link it carries.
  */
 
+import { LINK_FIRST, OPENSPOOL_MEDIA_TYPE } from '@filament-tracker/protocol/openspool';
+
 /** What Wrkbench looks for on a tag: the link to the spool, the OpenSpool record, and the tag's own serial. */
 export interface TagContents {
   /** As the phone reports it, e.g. "04:a1:b2:c3:d4:e5:f6". Some tags have none. */
@@ -36,14 +38,7 @@ const Reader = (): (new () => NfcReader) | undefined => (window as unknown as { 
 
 export const nfcAvailable = (): boolean => window.isSecureContext && Boolean(Reader());
 
-/**
- * Which record goes first. A phone that is tapped on a tag (without the app open) acts on the first record, so
- * the link goes first and tapping opens the spool. OpenSpool readers that look only at the first record would
- * want the data first: change this one line if that matters more than tap-to-open.
- */
-export const LINK_FIRST = true;
-
-const JSON_TYPE = 'application/json';
+const JSON_TYPE = OPENSPOOL_MEDIA_TYPE;
 
 function contentsOf(event: NfcReadingEvent): TagContents {
   const decoder = new TextDecoder();

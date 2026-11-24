@@ -126,6 +126,7 @@ The card also shows the spool's colour, name and amount left, and closes by itse
 
 - **Put away here**, after taking a spool out: puts it straight back, if the tap was a mistake.
 - **Into X1C** (the printer chosen as beside the display): marks it as the next spool going into that printer, the same as [scan, then insert](Spool-tags.md#scan-then-insert). Put it in within two minutes. You rarely need this: see [Into a printer](#into-a-printer).
+- **Write sticker**, for a spool with an NFC sticker: writes the spool's link and details onto the sticker again. See [Writing a sticker](#writing-a-sticker).
 
 With **Allow changes from this display** switched off, a tap only shows the spool. A Bambu Lab spool that is not in stock is named on the card, but no notice is left in **Inventory**.
 
@@ -153,10 +154,26 @@ A spool taken out of a printer that has no location is on the move again, until 
 
 ### Tags Wrkbench does not know
 
-- **A sticker that is not linked to anything**: **Link to an item** lists the untagged items in this location; choose one and confirm. The sticker is then that item's.
+- **A sticker that is not linked to anything**: **Link to an item** lists the untagged items in this location; choose one and confirm. The sticker is then that item's. For a filament spool, the display then writes the sticker too: see below.
 - **A Bambu Lab spool that is not in stock yet**: the card says **Not in stock yet** and what the tag says it is. **Link to an item** works here too, when the spool is already in stock without a tag and kept in this location. Otherwise sort it out in Wrkbench: **Inventory** shows a notice with **Sort it out**. There you choose the spool the tag is on, press **Add as a new spool** (the form is filled in from the tag: material, colour and size), or press **Not one of ours** to forget the read. The spool is put in the location of the display it was tapped on.
 
 Adding a spool needs an admin or owner. Operators can tie a tag to a spool in stock and forget a read.
+
+### Writing a sticker
+
+A display with a tag reader writes [spool stickers](Spool-tags.md) the way a phone does: the link that opens the spool in Wrkbench, then the spool's material, colour, brand and nozzle temperatures in the OpenSpool format. Any phone can then open the spool by tapping the sticker, and other OpenSpool tools can read it.
+
+1. Hold a new sticker to the reader. The card says **This tag is not linked to anything**.
+2. Press **Link to an item**, choose the spool and press **Link**.
+3. Keep the sticker on the reader. The card says **Linked to** and the spool, then **Sticker written** once the display has written the sticker and checked it.
+
+To write a sticker that is already linked (one linked before displays could write, or one you want to refresh after changing the spool's details), tap it and press **Write sticker** on its card.
+
+- Use **NTAG215 or NTAG216** stickers. Smaller ones (NTAG213) have no room for the spool's details; the display says so and leaves the sticker as it was.
+- If the sticker moves away part way, the card says **Not written**. Hold it still and press **Try again**. A sticker pulled away mid-write reads as empty until it is written again.
+- Only filament spools get a sticker written: items with no material are linked but not written, and a spool needs a nozzle temperature, or a material with a usual one (PLA, PETG, ABS, ASA, TPU, PA, PC).
+- A Bambu Lab spool's own tag is never written.
+- **Write sticker** only shows while **Allow changes from this display** is on.
 
 ### Which tags are read
 
@@ -167,7 +184,7 @@ A spool that carries the printer's own tag cannot be given a sticker from the di
 
 ## What the display can do
 
-A display has its own key, separate from any member's sign-in. With it, it can read the items, locations and amounts of its workspace. While **Allow changes** is on, it can also take a tapped spool out of its location or put it away there, take out the spool someone is looking for there, mark a spool for its printer and link tags to items kept in its location. It cannot change amounts, delete anything or reach any other part of Wrkbench. If a display is lost, **Remove** it in Settings and its key stops working at once.
+A display has its own key, separate from any member's sign-in. With it, it can read the items, locations and amounts of its workspace. While **Allow changes** is on, it can also take a tapped spool out of its location or put it away there, take out the spool someone is looking for there, mark a spool for its printer and link tags to items kept in its location. It can also write a spool's sticker on its reader. It cannot change amounts, delete anything or reach any other part of Wrkbench. If a display is lost, **Remove** it in Settings and its key stops working at once.
 
 ## Troubleshooting
 
@@ -180,13 +197,16 @@ A display has its own key, separate from any member's sign-in. With it, it can r
 | "That set-up code is not valid or has run out" | Make a new code in Settings, Displays, and type it on the display's keyboard. |
 | "This display was removed or set up again" | It was removed in Settings, or set up again with a new code. Make a new code. |
 | A Bambu Lab spool the printer already knows shows **Not in stock yet** | The id on the tag is not the one Wrkbench has for the spool. Link the tag to its spool once, with **Sort it out** in **Inventory**. The display cannot do this one: it never replaces a tag the printer uses. |
+| "This tag cannot be written" | It is not an NTAG sticker, or it was locked by another app. Use a new NTAG215 or NTAG216 sticker. |
+| "That is another tag" while writing | A different sticker or spool is on the reader. Hold the one you just linked, or tapped, against it. |
 | A tap shows the spool but changes nothing | **Allow changes from this display** is off, or the display has no location. Check both in Settings, Displays. |
 | Accented letters look plain ("Cafe") | The display's fonts have plain letters only; names are shown without accents. |
 
 ## Good to know
 
-- **Checked so far:** on a real 2.8" USB-C board (ST7789 panel), set-up from a phone, pairing with an `https://` server, showing a location's items, the printer status (with a simulated printer) and picking up again after the server restarted all work. Still to try on real hardware: the tag reader (the code has not met a real PN532 yet), a real printer's status, a Wi-Fi outage, and removing a display in Settings.
-- **Bambu Lab tags have not been read on real hardware yet.** Tapping in and out, spools on the move and matching them to a printer were checked by sending Wrkbench what a display sends, and the keys that unlock a tag were checked against an independent calculation. The first thing to try: tap a spool the printer has already recognised. If the card says **Not in stock yet**, the id on the tag is not the one the printer reports; link the tag to its spool once with **Sort it out** in **Inventory** and it is known from then on.
+- **Checked so far:** on a real 2.8" USB-C board (ST7789 panel), set-up from a phone, pairing with an `https://` server, showing a location's items, the printer status (with a simulated printer), picking up again after the server restarted, and a red PN532 tag reader on **CN1** all work. Still to try on real hardware: a real printer's status, a Wi-Fi outage, and removing a display in Settings.
+- **Bambu Lab tags read on real hardware.** A new Bambu Lab spool that no printer had seen was read, showed **Not in stock yet**, and was sorted out from **Inventory**. Still to try: tap a spool the printer has already recognised, to check it is matched without help. Spools on the move and matching them to a printer were checked by sending Wrkbench what a display sends. If that spool shows **Not in stock yet**, the id on the tag is not the one the printer reports; link the tag to its spool once with **Sort it out** in **Inventory** and it is known from then on.
+- **Writing stickers has not been tried on a real display yet.** The firmware was built and how it lays out and checks a sticker was tested on a computer, and the server's stickers were checked to read back the same as a phone's. Still to try on real hardware: writing a new NTAG215, writing over one a phone wrote, pulling it away part way, and reading the result with a phone.
 - **Finding a spool has not been tried on a real display yet.** It was checked by sending Wrkbench what a display sends and reading what it would be told to show, and the firmware was built and its reading of that answer tested. Still to try on real hardware: how the lit row looks across a room, and touching it.
 - The display asks for updates every 10 seconds; when nothing changed the answer is a few bytes.
 - On your own server, `DEVICES_ENABLED=false` switches displays off and `DEVICE_MAX_PER_WORKSPACE` changes the limit of five. See [Self-hosting](Self-hosting.md).

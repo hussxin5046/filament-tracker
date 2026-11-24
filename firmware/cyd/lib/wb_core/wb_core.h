@@ -107,6 +107,19 @@ struct TagInfo {
   bool canLink;
   bool canInsert;
   char printer[NAME_LEN];
+  bool canWriteSticker;  // the server will hand over a sticker to write onto this tag
+};
+
+/**
+ * The most a sticker's user memory holds: an NTAG216's 888 bytes. An NTAG215 holds 504, and its capability
+ * container says so; stickerCapacity() reads it from there.
+ */
+constexpr size_t STICKER_MAX = 888;
+
+/** What to write onto a spool's sticker, from page 4 on: an NDEF message in its TLV, as the server built it. */
+struct Sticker {
+  size_t len;
+  uint8_t bytes[STICKER_MAX];
 };
 
 struct PairResult {
@@ -124,6 +137,11 @@ bool parseOverview(const char *json, size_t len, Overview &out);
 bool parseTag(const char *json, size_t len, TagInfo &out);
 bool parsePair(const char *json, size_t len, PairResult &out);
 bool parseItemList(const char *json, size_t len, ItemList &out);
+/**
+ * The "sticker" of a response (hex) as bytes. False when there is none, or when it is not an NDEF TLV that ends
+ * in a terminator, so the display never writes something it did not mean to.
+ */
+bool parseSticker(const char *json, size_t len, Sticker &out);
 /** The "error" or "message" text of a response, or "" when it has neither. */
 void parseMessage(const char *json, size_t len, char *out, size_t outLen);
 
@@ -145,6 +163,18 @@ bool isHttps(const char *url);
 
 /** Reader bytes as the server expects them: two capital hex digits per byte. */
 void uidToHex(const uint8_t *uid, size_t len, char *out, size_t outLen);
+
+/**
+ * How many bytes of NDEF a sticker can take, from its capability container (page 3): 0xE1, the version, the
+ * size in 8-byte units, then the access byte. 0 when it is not formatted for NDEF or is locked against writing.
+ */
+size_t stickerCapacity(const uint8_t cc[4]);
+
+/** How many 4-byte pages `len` bytes take on a sticker. */
+inline size_t stickerPages(size_t len) { return (len + 3) / 4; }
+
+/** Page `index` of what to write (0 goes to the sticker's page 4), with zeros after the end. */
+void stickerPage(const Sticker &sticker, size_t index, uint8_t out[4]);
 
 /** Waits between failed polls: 5 s, doubling, at most 5 minutes. `failures` counts from 1. */
 uint32_t backoffMs(unsigned failures);

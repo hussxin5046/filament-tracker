@@ -35,7 +35,8 @@ enum class CommandType : uint8_t {
   Tag,       // arg: tag key (a UID, or what the server answered a tap with): look it up, change nothing
   PutAway,   // arg: tag key
   Insert,    // arg: tag key
-  Link,      // arg: tag key, arg2: item id
+  Link,      // arg: tag key, arg2: item id. A spool's answer carries the sticker to write
+  Sticker,   // arg: tag key: what to write on the sticker tied to an item
   TakeOut,   // arg: the id of the item the display is lit for. It is taken out: on the move
   Untagged,  // items here without a tag
   Forget,    // drop the token: the display asks for a new set-up code
@@ -53,6 +54,7 @@ enum class ResultType : uint8_t {
   Tag,           // data: wb::TagInfo*; message: what a tap did, "" for a plain look-up
   Untagged,      // data: wb::ItemList*
   Action,        // ok + message (put away, insert, link, take out)
+  Sticker,       // data: wb::Sticker* to write onto the tag, which the receiver frees; message: what was done first ("Linked to ...")
   Paired,        // message: the display's name
   PairFailed,    // message: why
   Unauthorized,  // the token stopped working: removed or set up again elsewhere

@@ -365,13 +365,15 @@ void tagCall(const Command &command) {
   char path[96];
   const bool tap = command.type == CommandType::Tap;
   const char *suffix =
-      tap ? "/tap" : command.type == CommandType::PutAway ? "/put-away" : command.type == CommandType::Insert ? "/insert" : command.type == CommandType::Link ? "/link" : "";
+      tap ? "/tap" : command.type == CommandType::PutAway ? "/put-away" : command.type == CommandType::Insert ? "/insert" : command.type == CommandType::Link ? "/link"
+      : command.type == CommandType::Sticker ? "/sticker" : "";
   snprintf(path, sizeof path, "/api/device/tag/%s%s", command.arg, suffix);
   static char body[wb::BAMBU_JSON_LEN + 16];  // only the network task runs this
   if (command.type == CommandType::Link) snprintf(body, sizeof body, "{\"itemId\":\"%s\"}", command.arg2);
   else if (tap && command.blocks[0]) snprintf(body, sizeof body, "{\"blocks\":{%s}}", command.blocks);
   else snprintf(body, sizeof body, "{}");
-  const int status = command.type == CommandType::Tag ? request("GET", path) : request("POST", path, body);
+  const bool get = command.type == CommandType::Tag || command.type == CommandType::Sticker;
+  const int status = get ? request("GET", path) : request("POST", path, body);
   if (status == 401) return unauthorized();
   if (command.type == CommandType::Tag || tap) {
     auto *info = static_cast<wb::TagInfo *>(malloc(sizeof(wb::TagInfo)));
@@ -392,6 +394,20 @@ void tagCall(const Command &command) {
   char message[96];
   wb::parseMessage(response, responseLen, message, sizeof message);
   if (!message[0]) wb::copyText(message, sizeof message, status == 200 ? "Done" : describeFailure(status));
+  if (status == 200 && command.type == CommandType::Link) lastV[0] = '\0';
+  // A sticker to write: asked for, or handed over with a spool's link. Without one, a link is just done.
+  if (status == 200 && (command.type == CommandType::Sticker || command.type == CommandType::Link)) {
+    auto *sticker = static_cast<wb::Sticker *>(malloc(sizeof(wb::Sticker)));
+    if (sticker && wb::parseSticker(response, responseLen, *sticker)) {
+      post(ResultType::Sticker, true, command.type == CommandType::Link ? message : "", sticker);
+      return;
+    }
+    free(sticker);
+    if (command.type == CommandType::Sticker) {
+      post(ResultType::Action, false, "Wrkbench sent nothing to write");
+      return;
+    }
+  }
   post(ResultType::Action, status == 200, message);
   if (status == 200) lastV[0] = '\0';  // what is stored here may have changed
 }

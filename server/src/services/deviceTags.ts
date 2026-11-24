@@ -34,7 +34,8 @@ export function readTagKey(raw: string): string {
 /** The key for a spool's own tag id. */
 export const spoolKey = (tagId: string): string => `T${tagId}`;
 
-const isSpoolKey = (key: string): boolean => key.startsWith('T');
+/** Whether a key names a spool's own tag (a Bambu Lab spool) rather than a sticker's chip. */
+export const isSpoolKey = (key: string): boolean => key.startsWith('T');
 
 /** What linking stores on the item: the spool's own tag id, or the sticker form of a chip UID. */
 export const tagIdFor = (key: string): string => {

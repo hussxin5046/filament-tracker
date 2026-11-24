@@ -7,7 +7,7 @@ Wrkbench writes stickers in the [OpenSpool](https://github.com/spuder/OpenSpool)
 ## What you need
 
 - **NFC stickers**: NTAG215 (or NTAG216). They are sold in sheets and cost very little.
-- **To write a sticker from Wrkbench**: an Android phone with Chrome, and Wrkbench opened at a secure (`https://`) address. Other devices can still do it with any NFC-writing app (see below).
+- **To write a sticker from Wrkbench**: an Android phone with Chrome, and Wrkbench opened at a secure (`https://`) address, or a [location display](Location-displays.md#writing-a-sticker) with a tag reader. Other devices can still do it with any NFC-writing app (see below).
 - **To use a sticker**: any phone. Tapping it opens the spool.
 
 Bambu Lab's own spools already carry a tag the printer reads, so they do not need a sticker. A [location display](Location-displays.md#which-tags-are-read) with a tag reader reads those tags too. Stickers are for everything else.
@@ -39,6 +39,10 @@ Wrkbench reads the sticker before writing it:
 - **If this spool has its own tag that the printer reads**, a sticker is refused unless you choose **Use a sticker anyway**. Wrkbench keeps one tag per spool, so the sticker would replace its record of the printer's tag, and the printer would stop recognising the spool by itself.
 
 **Forget the sticker** unties a sticker from the spool, for one that was thrown away.
+
+### On a location display
+
+A display with a tag reader writes the same sticker: link a new sticker to a spool on the display and keep it on the reader. See [Writing a sticker](Location-displays.md#writing-a-sticker).
 
 ### On an iPhone or a computer
 

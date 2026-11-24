@@ -149,7 +149,60 @@ bool parseTag(const char *json, size_t len, TagInfo &out) {
   JsonObjectConst insert = doc["insertInto"];
   out.canInsert = !insert.isNull();
   if (out.canInsert) copyText(out.printer, sizeof out.printer, insert["name"] | "");
+  out.canWriteSticker = doc["canWriteSticker"] | false;
   return true;
+}
+
+namespace {
+
+int hexDigit(char c) {
+  if (c >= '0' && c <= '9') return c - '0';
+  if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+  if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+  return -1;
+}
+
+}  // namespace
+
+bool parseSticker(const char *json, size_t len, Sticker &out) {
+  out.len = 0;
+  JsonDocument doc;
+  if (deserializeJson(doc, json, len) != DeserializationError::Ok) return false;
+  const char *hex = doc["sticker"] | "";
+  const size_t digits = strlen(hex);
+  if (digits == 0 || digits % 2 != 0 || digits / 2 > STICKER_MAX) return false;
+  for (size_t i = 0; i < digits / 2; i++) {
+    const int high = hexDigit(hex[2 * i]);
+    const int low = hexDigit(hex[2 * i + 1]);
+    if (high < 0 || low < 0) return false;
+    out.bytes[i] = static_cast<uint8_t>(high << 4 | low);
+  }
+  const size_t n = digits / 2;
+  // An NDEF TLV (0x03, then its length in one byte or 0xFF and two) whose message ends just before 0xFE.
+  if (n < 3 || out.bytes[0] != 0x03) return false;
+  size_t message = out.bytes[1], start = 2;
+  if (message == 0xFF) {
+    if (n < 5) return false;
+    message = static_cast<size_t>(out.bytes[2]) << 8 | out.bytes[3];
+    start = 4;
+  }
+  if (start + message + 1 != n || out.bytes[n - 1] != 0xFE) return false;
+  out.len = n;
+  return true;
+}
+
+void stickerPage(const Sticker &sticker, size_t index, uint8_t out[4]) {
+  for (size_t i = 0; i < 4; i++) {
+    const size_t at = index * 4 + i;
+    out[i] = at < sticker.len ? sticker.bytes[at] : 0;
+  }
+}
+
+size_t stickerCapacity(const uint8_t cc[4]) {
+  // The access byte's high nibble is read access and low nibble write access: 0 means anyone may.
+  if (cc[0] != 0xE1 || (cc[3] & 0x0F) != 0) return 0;
+  const size_t size = static_cast<size_t>(cc[2]) * 8;
+  return size > STICKER_MAX ? STICKER_MAX : size;
 }
 
 bool parsePair(const char *json, size_t len, PairResult &out) {
