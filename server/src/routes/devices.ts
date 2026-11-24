@@ -13,10 +13,11 @@ import { notifyWorkspaceSoon } from '@/realtime';
 import { describeActivity, logSystemActivity } from '@/services/activity';
 import { boardOf, buildFor, compareVersions, firmwareFile, latestFirmware, MIN_UPDATABLE, type FirmwareManifest } from '@/services/firmware';
 import { buildOverview, displayOnline as isOnline, displayPrinter, displayRow, forDisplay, itemSelect, locationTree, MAX_ROWS, POLL_SECONDS } from '@/services/deviceOverview';
-import { itemForKey, readTagKey, readUid, spoolKey, tagIdFor } from '@/services/deviceTags';
+import { isSpoolKey, itemForKey, readTagKey, readUid, spoolKey, tagIdFor } from '@/services/deviceTags';
 import { endFind, findForDevice, isSought } from '@/services/find';
 import { appUrl } from '@/services/mail';
 import { assertInWorkspace, moveItems, takeOut } from '@/services/stock';
+import { stickerHex, stickerProblem } from '@/services/stickers';
 import { assignTag } from '@/services/tags';
 import { hashSecret, newDeviceToken, newPairingCode, normalizePairingCode } from '@/services/tokens';
 
@@ -398,8 +399,15 @@ function knownTag(device: AuthedDevice, key: string, item: TaggedItem, tree: Tre
     item: { ...displayRow(item, null, () => ''), location: item.locationId ? forDisplay(tree.path(item.locationId), 64) : null, here },
     canPutAway: device.canWrite && device.locationId !== null && !here,
     insertInto: device.canWrite && device.machineId && device.machine ? { machineId: device.machineId, name: device.machine.name } : null,
+    canWriteSticker: canWriteSticker(device, key, item),
   };
 }
+
+/**
+ * Whether the display may write this item's sticker onto the tag on its reader: only an NFC sticker (a Bambu Lab
+ * spool's own tag is locked and never written), only a spool with what a reader needs, and only with changes on.
+ */
+const canWriteSticker = (device: AuthedDevice, key: string, item: TaggedItem) => device.canWrite && !isSpoolKey(key) && stickerProblem(item) === null;
 
 /** A tag looked up without changing anything. */
 deviceRouter.get('/tag/:uid', async (req, res) => {
@@ -553,6 +561,23 @@ deviceRouter.post('/tag/:uid/link', async (req, res) => {
   if (item.tagId && !isStickerTag(item.tagId)) throw new HttpError(409, `${item.name} already has its spool's own tag, which the printer uses to recognise it`);
   await prisma.$transaction((tx) => assignTag(tx, device.workspaceId, item.id, tagIdFor(key)));
   await logChange(device, 'item.tag', `Tagged ${item.name}`, item.id);
-  res.json({ ok: true, message: `Linked to ${forDisplay(item.name)}` });
+  // A spool's sticker is written too, while it is still on the reader, so a phone or another OpenSpool reader can read it.
+  const sticker = isSpoolKey(key) ? null : stickerHex(await prisma.item.findUniqueOrThrow({ where: { id: item.id }, select: itemSelect }));
+  res.json({ ok: true, message: `Linked to ${forDisplay(item.name)}`, ...(sticker ? { sticker } : {}) });
+});
+
+/**
+ * What to write on the sticker tied to an item: the link that opens it, then the OpenSpool record. The display
+ * writes it to the tag on its reader and reads it back. Nothing changes in Wrkbench: the sticker is already tied.
+ */
+deviceRouter.get('/tag/:uid/sticker', async (req, res) => {
+  const device = deviceOf(res);
+  requireWrite(device);
+  const key = readTagKey(param(req, 'uid'));
+  if (isSpoolKey(key)) throw new HttpError(409, "A Bambu Lab spool's own tag cannot be written");
+  const item = await taggedItem(req, device);
+  const sticker = stickerHex(item);
+  if (!sticker) throw new HttpError(409, forDisplay(stickerProblem(item) ?? 'This item cannot have a spool sticker', 90));
+  res.json({ sticker });
 });
 
