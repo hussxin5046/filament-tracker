@@ -53,9 +53,15 @@ interface Catalog {
 
 const CHECK_MS = 60 * 60_000;
 const RETRY_MS = 5 * 60_000;
+/** A check asked for from Settings looks again at most this often, so repeated presses never use up GitHub's limit. */
+const CHECK_NOW_MS = 60_000;
 const TIMEOUT_MS = 20_000;
 
 let cached: { catalog: Catalog | null; until: number } | null = null;
+/** When the newest firmware was last looked up, and whether that worked. */
+let lastLookup: { at: number; ok: boolean } | null = null;
+/** When "Check for new firmware" last made a fresh lookup. */
+let lastCheckNow = 0;
 let pending: Promise<Catalog | null> | null = null;
 const files = new Map<string, Buffer>();
 
@@ -136,18 +142,35 @@ async function catalog(): Promise<Catalog | null> {
   pending ??= loadCatalog()
     .then((found) => {
       cached = { catalog: found, until: Date.now() + CHECK_MS };
+      lastLookup = { at: Date.now(), ok: true };
       return found;
     })
     .catch((error: unknown) => {
       console.warn(`Display firmware: could not look up the newest build (${error instanceof Error ? error.message : String(error)}). Trying again in 5 minutes.`);
       // Keep offering what was found before, if anything.
       cached = { catalog: cached?.catalog ?? null, until: Date.now() + RETRY_MS };
+      lastLookup = { at: Date.now(), ok: false };
       return cached.catalog;
     })
     .finally(() => {
       pending = null;
     });
   return pending;
+}
+
+/**
+ * Look for new firmware now rather than within the hour, for "Check for new firmware" in Settings. A lookup in
+ * the last minute is reused. `reached` is false when the releases could not be read just now; whatever was
+ * found before is still offered then.
+ */
+export async function checkFirmwareNow(): Promise<{ manifest: FirmwareManifest | null; reached: boolean; checkedAt: Date | null }> {
+  if (!env.DEVICES_ENABLED || !env.FIRMWARE_UPDATES) return { manifest: null, reached: true, checkedAt: null };
+  if (!pending && cached && Date.now() - lastCheckNow >= CHECK_NOW_MS) {
+    lastCheckNow = Date.now();
+    cached = { ...cached, until: 0 };
+  }
+  const manifest = await latestFirmware();
+  return { manifest, reached: lastLookup?.ok ?? true, checkedAt: lastLookup ? new Date(lastLookup.at) : null };
 }
 
 /** The build for a display's board in the newest firmware, if there is one. */
@@ -191,5 +214,7 @@ export async function firmwareFile(file: FirmwareFile): Promise<Buffer | null> {
 export function resetFirmwareCache(): void {
   cached = null;
   pending = null;
+  lastLookup = null;
+  lastCheckNow = 0;
   files.clear();
 }

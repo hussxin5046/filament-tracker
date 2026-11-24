@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CircleArrowUp, Copy, Pencil, Plus, RefreshCw, Trash2, Usb, X } from 'lucide-react';
+import { CircleArrowUp, CloudDownload, Copy, Pencil, Plus, RefreshCw, Trash2, Usb, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge, ErrorNote, Loading, Muted, SectionTitle } from '@/components/ui/Display';
 import { Checkbox, FormGrid, SelectField, TextField } from '@/components/ui/Form';
@@ -21,6 +21,7 @@ export function DevicesSection({ catalog }: { catalog: Catalog }) {
   const { canEdit, wsPath } = useWorkspace();
   const devices = useWsQuery<Device[]>('/devices');
   const { run, busy } = useAction();
+  const toast = useToast();
   const runNow = useOptimisticAction();
   const confirm = useConfirm();
   const [dialog, setDialog] = useState<Dialog | null>(null);
@@ -43,6 +44,14 @@ export function DevicesSection({ catalog }: { catalog: Catalog }) {
 
   const newCode = (device: Device) => run(async () => remember(await api.post<Device>(wsPath(`/devices/${device.id}/pairing`)!, {})), 'New set-up code made');
 
+  // Wrkbench looks for new firmware by itself once an hour; this looks now, after a release was just published.
+  const checkFirmware = () =>
+    run(async () => {
+      const found = await api.post<{ version: string | null; reached: boolean }>(wsPath('/firmware/check')!, {});
+      if (!found.reached) toast('Could not reach the firmware releases just now. Try again in a few minutes.', 'danger');
+      else toast(found.version ? `The newest firmware is ${found.version}` : 'No firmware has been published yet');
+    });
+
   const remove = async (device: Device) => {
     const ok = await confirm({
       title: `Remove ${device.name}?`,
@@ -59,6 +68,9 @@ export function DevicesSection({ catalog }: { catalog: Catalog }) {
         action={
           canEdit && (
             <div className={styles.danger}>
+              <Button size="sm" icon={CloudDownload} onClick={checkFirmware} disabled={busy}>
+                Check for new firmware
+              </Button>
               <Button size="sm" icon={Usb} onClick={() => setDialog({ kind: 'flash' })}>
                 Flash a new display
               </Button>

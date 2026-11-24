@@ -94,6 +94,8 @@ In **Settings**, **Displays**, each display has:
 
 New firmware for displays is published from time to time. When there is some for a display, its card in **Settings**, **Displays** says so and has an **Update to 0.3.1** button (for admins and owners).
 
+Wrkbench looks for new firmware by itself once an hour. To look straight away, for example just after a release was published, press **Check for new firmware** at the top of **Displays**. It says the newest version it found, and the cards update. Pressing it again within a minute gives the same answer without looking again.
+
 1. Press **Update**. The display picks it up within 10 seconds, while it is connected.
 2. Its screen shows **Updating firmware** and how far along the download is, then it restarts on the new firmware. It takes a minute or two; leave it plugged in.
 3. Its card shows the new version once the display is back.

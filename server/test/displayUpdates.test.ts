@@ -20,7 +20,7 @@ const dir = process.env.FIRMWARE_DIR!;
 const ws = (p: string) => `/workspaces/${workspaceId}${p}`;
 
 /** Publishes a build for the 2.8" ST7789 board into the test's firmware folder, as the release workflow would. */
-function publish(version: string, options: { corrupt?: boolean } = {}) {
+function publish(version: string, options: { corrupt?: boolean; keepCache?: boolean } = {}) {
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });
   const app = randomBytes(4096);
@@ -41,7 +41,8 @@ function publish(version: string, options: { corrupt?: boolean } = {}) {
     ],
   };
   writeFileSync(path.join(dir, 'firmware-manifest.json'), JSON.stringify(manifest));
-  resetFirmwareCache();
+  // keepCache: published while the server still has the last lookup, as a new release on GitHub is.
+  if (!options.keepCache) resetFirmwareCache();
   return { bytes: app, md5: manifest.builds[0].app.md5, full };
 }
 
@@ -84,6 +85,29 @@ describe('firmware versions', () => {
     expect(compareVersions('0.10.0', '0.9.9')).toBeGreaterThan(0);
     expect(compareVersions('1.0.0', '1.0.0')).toBe(0);
     expect(compareVersions('0.3.0', 'dev')).toBeNull();
+  });
+});
+
+describe('checking for new firmware from Settings', () => {
+  it('finds a new release at once for an admin, and looks again at most once a minute', async () => {
+    publish('0.3.0');
+    const { id } = await display('Rack', 'cyd-28-st7789', '0.3.0');
+    expect((await card(id)).firmware.latest).toBe('0.3.0');
+
+    publish('0.4.0', { keepCache: true });
+    expect((await card(id)).firmware.latest).toBe('0.3.0');
+    expect((await app.call('POST', ws('/firmware/check'), operator, {})).status).toBe(403);
+    const checked = await app.call('POST', ws('/firmware/check'), admin, {});
+    expect(checked.body).toMatchObject({ version: '0.4.0', reached: true });
+    expect((await card(id)).firmware).toMatchObject({ latest: '0.4.0', updateAvailable: true });
+
+    // Pressed again straight away: the last minute's answer, without looking again.
+    publish('0.5.0', { keepCache: true });
+    expect((await app.call('POST', ws('/firmware/check'), admin, {})).body).toMatchObject({ version: '0.4.0' });
+    const now = Date.now();
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(now + 61_000);
+    expect((await app.call('POST', ws('/firmware/check'), admin, {})).body).toMatchObject({ version: '0.5.0' });
+    clock.mockRestore();
   });
 });
 
