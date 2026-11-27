@@ -50,6 +50,6 @@
     "@types/node": "^24.0.0",
     "socket.io-client": "^4.8.1",
     "typescript": "^5.9.0",
-    "vitest": "^3.2.7"
+    "vitest": "^5.1.1"
   }
 }
