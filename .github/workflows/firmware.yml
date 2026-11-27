@@ -37,13 +37,13 @@ jobs:
       run:
         working-directory: firmware/cyd
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/.platformio
           key: platformio-${{ runner.os }}-${{ hashFiles('firmware/cyd/platformio.ini') }}
@@ -73,7 +73,7 @@ jobs:
       - name: Package
         run: python tools/package_release.py --out dist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: display-firmware
           path: firmware/cyd/dist/
