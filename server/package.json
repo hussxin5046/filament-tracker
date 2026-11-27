@@ -37,7 +37,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.5.0",
     "nodemailer": "^10.6.1",
-    "prisma": "^6.19.0",
+    "prisma": "^7.10.1",
     "socket.io": "^4.8.1",
     "tsx": "^4.20.0",
     "zod": "^4.1.0"
